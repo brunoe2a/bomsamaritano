@@ -14,12 +14,17 @@ RUN apk add --no-cache \
     icu-dev \
     oniguruma-dev \
     libxml2-dev \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
         pdo_sqlite \
         pdo_mysql \
         mbstring \
         zip \
         intl \
+        gd \
     && rm -rf /var/cache/apk/*
 
 # Install Composer
