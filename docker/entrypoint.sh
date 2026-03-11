@@ -28,6 +28,10 @@ fi
 echo "🗄️  Executando migrations..."
 php artisan migrate --force
 
+# Seed admin user
+echo "👤 Verificando usuário admin..."
+php artisan db:seed --class=AdminSeeder --force
+
 # Cache configurations for production
 echo "⚡ Otimizando para produção..."
 php artisan config:cache
