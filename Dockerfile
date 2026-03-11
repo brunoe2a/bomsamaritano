@@ -1,25 +1,58 @@
 # ============================================================
-# Stage 1: Build Frontend Assets (Node.js)
+# Stage 1: Build Frontend Assets (PHP + Node.js combined)
+# Wayfinder plugin requires PHP to generate types during build
 # ============================================================
-FROM node:20-alpine AS frontend
+FROM php:8.3-cli-alpine AS frontend
+
+# Install Node.js
+RUN apk add --no-cache nodejs npm
+
+# Install PHP extensions needed by Laravel during build
+RUN apk add --no-cache \
+    sqlite-dev \
+    libzip-dev \
+    icu-dev \
+    oniguruma-dev \
+    libxml2-dev \
+    && docker-php-ext-install \
+        pdo_sqlite \
+        pdo_mysql \
+        mbstring \
+        zip \
+        intl \
+    && rm -rf /var/cache/apk/*
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-COPY package.json package-lock.json* pnpm-lock.yaml* ./
+# Install PHP dependencies first (for wayfinder artisan command)
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-scripts \
+    --prefer-dist
 
-# Install dependencies (npm or pnpm)
+# Copy entire project
+COPY . .
+
+# Generate autoload and discover packages
+RUN composer dump-autoload --optimize \
+    && php artisan package:discover --ansi 2>/dev/null || true
+
+# Install Node dependencies and build
 RUN if [ -f pnpm-lock.yaml ]; then \
         npm install -g pnpm && pnpm install --frozen-lockfile; \
     else \
         npm ci; \
     fi
 
-COPY . .
-
 RUN npm run build
 
 # ============================================================
-# Stage 2: PHP Application
+# Stage 2: PHP Application (Production)
 # ============================================================
 FROM php:8.3-fpm-alpine AS app
 
@@ -30,7 +63,14 @@ RUN apk add --no-cache \
     curl \
     zip \
     unzip \
-    git \
+    libpng \
+    libjpeg-turbo \
+    freetype \
+    libzip \
+    icu-libs \
+    oniguruma \
+    libxml2 \
+    sqlite-libs \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
@@ -51,6 +91,15 @@ RUN apk add --no-cache \
         zip \
         intl \
         opcache \
+    && apk del \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+        libzip-dev \
+        icu-dev \
+        oniguruma-dev \
+        libxml2-dev \
+        sqlite-dev \
     && rm -rf /var/cache/apk/*
 
 # Install Composer
