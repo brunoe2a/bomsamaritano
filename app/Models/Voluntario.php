@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Voluntario extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'nome',
+        'foto',
+        'cpf',
+        'rg',
+        'data_nascimento',
+        'telefone',
+        'whatsapp',
+        'email',
+        'endereco_rua',
+        'endereco_numero',
+        'endereco_complemento',
+        'endereco_bairro',
+        'endereco_cidade',
+        'endereco_estado',
+        'endereco_cep',
+        'area_atuacao',
+        'habilidades',
+        'data_inicio',
+        'status',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'data_nascimento' => 'date',
+            'data_inicio' => 'date',
+        ];
+    }
+
+    public function scopeAtivos($query)
+    {
+        return $query->where('status', 'ativo');
+    }
+
+    public function turmas(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Turma::class, 'turma_voluntario');
+    }
+}

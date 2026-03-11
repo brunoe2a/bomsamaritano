@@ -1,0 +1,8 @@
+﻿
+> build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+[plugin @laravel/vite-plugin-wayfinder] Types generated for actions, routes, form variants
+transforming...
+[32mÔ£ô[39m 3248 modules transformed.

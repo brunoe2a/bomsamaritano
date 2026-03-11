@@ -1,0 +1,61 @@
+﻿node.exe : npm warn Unknown project config 
+"public-hoist-pattern". This will stop working in the next 
+major version of npm.
+No linha:1 caractere:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow... 
+   version of npm.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+> build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+[plugin @laravel/vite-plugin-wayfinder] Types generated for actions, routes, form variants
+transforming...
+[32mÔ£ô[39m 3248 modules transformed.
+[31mÔ£ù[39m Build failed in 5.09s
+[31merror during build:
+[31mresources/js/pages/Welcome.vue?vue&type=script&setup=true&l
+ang.ts (9:27): "register" is not exported by 
+"resources/js/routes/index.ts", imported by "resources/js/pages/
+Welcome.vue?vue&type=script&setup=true&lang.ts".[31m
+file: [36mC:/Users/creci.com/Herd/bomsamaritano/resources/js/pa
+ges/Welcome.vue?vue&type=script&setup=true&lang.ts:9:27[31m
+[33m
+7: 
+8: import { Head, Link } from '@inertiajs/vue3';
+9: import { dashboard, login, register } from '@/routes';
+                              ^
+[31m
+    at getRollupError (file:///C:/Users/creci.com/Herd/bomsamari
+tano/node_modules/rollup/dist/es/shared/parseAst.js:402:41)
+    at error (file:///C:/Users/creci.com/Herd/bomsamaritano/node
+_modules/rollup/dist/es/shared/parseAst.js:398:42)
+    at Module.error (file:///C:/Users/creci.com/Herd/bomsamarita
+no/node_modules/rollup/dist/es/shared/node-entry.js:17040:16)
+    at Module.traceVariable (file:///C:/Users/creci.com/Herd/bom
+samaritano/node_modules/rollup/dist/es/shared/node-entry.js:1745
+2:29)
+    at ModuleScope.findVariable (file:///C:/Users/creci.com/Herd
+/bomsamaritano/node_modules/rollup/dist/es/shared/node-entry.js:
+15070:39)
+    at ChildScope.findVariable (file:///C:/Users/creci.com/Herd/
+bomsamaritano/node_modules/rollup/dist/es/shared/node-entry.js:5
+673:38)
+    at FunctionScope.findVariable (file:///C:/Users/creci.com/He
+rd/bomsamaritano/node_modules/rollup/dist/es/shared/node-entry.j
+s:5673:38)
+    at FunctionBodyScope.findVariable (file:///C:/Users/creci.co
+m/Herd/bomsamaritano/node_modules/rollup/dist/es/shared/node-ent
+ry.js:5673:38)
+    at ReturnValueScope.findVariable (file:///C:/Users/creci.com
+/Herd/bomsamaritano/node_modules/rollup/dist/es/shared/node-entr
+y.js:5673:38)
+    at FunctionBodyScope.findVariable (file:///C:/Users/creci.co
+m/Herd/bomsamaritano/node_modules/rollup/dist/es/shared/node-ent
+ry.js:5673:38)[39m

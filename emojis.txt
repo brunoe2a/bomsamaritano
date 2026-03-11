@@ -1,0 +1,26 @@
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Alunos\Create.vue:83: <h2 class="mb-4 text-lg font-semibold text-foreground">📋 Dados do Aluno</h2>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Alunos\Create.vue:124: <h2 class="mb-4 text-lg font-semibold text-foreground">📚 Matrícula em Turmas</h2>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Alunos\Create.vue:152: <h2 class="mb-4 text-lg font-semibold text-foreground">👤 Dados do Responsável</h2>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Alunos\Edit.vue:86: <h2 class="mb-4 text-lg font-semibold text-foreground">📋 Dados do Aluno</h2>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Alunos\Edit.vue:132: <h2 class="mb-4 text-lg font-semibold text-foreground">👤 Responsável</h2>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Alunos\Show.vue:76: <h3 class="mb-4 text-lg font-semibold text-foreground">📊 Frequência</h3>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Alunos\Show.vue:87: <p v-if="frequencia.percentual < 75" class="font-medium text-red-600">⚠️ Frequência abaixo de 75%</p>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Alunos\Show.vue:94: <h3 class="mb-4 text-lg font-semibold text-foreground">📚 Turmas Matriculadas</h3>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Alunos\Show.vue:113: <h3 class="mb-4 text-lg font-semibold text-foreground">👤 Responsável</h3>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Alunos\Show.vue:121: 📱 {{ aluno.responsavel.whatsapp }}
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Dashboard.vue:90: icon="👥"
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Dashboard.vue:97: icon="🏫"
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Dashboard.vue:103: icon="📋"
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Dashboard.vue:109: icon="💰"
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Dashboard.vue:119: <h3 class="mb-4 text-lg font-semibold text-foreground">📚 Alunos por Curso</h3>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Dashboard.vue:132: <h3 class="mb-4 text-lg font-semibold text-foreground">📊 Frequência Geral (últimos 6 meses)</h3>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Dashboard.vue:146: <h3 class="mb-4 text-lg font-semibold text-foreground">💰 Financeiro Mensal </h3>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Dashboard.vue:157: <h3 class="mb-4 text-lg font-semibold text-foreground">🎂 Aniversariantes</h3>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Dashboard.vue:183: <h3 class="mb-4 text-lg font-semibold text-foreground">💳 Últimas Movimentações</h3>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Professores\Index.vue:95: <span>📞 {{ prof.telefone || '-' }}</span>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Professores\Show.vue:53: <div v-if="professor.whatsapp" class="text-muted-foreground">📱 {{ professor.whatsapp }}</div>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Professores\Show.vue:79: <h3 class="mb-4 text-lg font-semibold text-foreground">📚 Turmas</h3>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Turmas\Chamada.vue:87: <h1 class="text-2xl font-bold text-foreground">📋 Chamada</h1>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Turmas\Chamada.vue:118: ⚠️ Uma chamada já foi registrada para esta data. Os dados serão atualizados.
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Turmas\Show.vue:197: <h3 class="mb-4 text-lg font-semibold text-foreground">📋 Histórico de Chamadas</h3>
+c:\Users\creci.com\Herd\bomsamaritano\resources\js\pages\Voluntarios\Show.vue:48: <div v-if="voluntario.whatsapp" class="text-sm text-muted-foreground">📱 {{ voluntario.whatsapp }}</div>

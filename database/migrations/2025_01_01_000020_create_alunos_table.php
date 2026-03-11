@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('alunos', function (Blueprint $table) {
+            $table->id();
+            $table->string('nome');
+            $table->date('data_nascimento');
+            $table->string('ano_escolar')->nullable();
+            $table->string('foto')->nullable();
+            $table->foreignId('responsavel_id')->constrained('responsaveis')->cascadeOnDelete();
+            $table->enum('status', ['ativo', 'inativo', 'trancado', 'concluido'])->default('ativo');
+            $table->text('observacoes')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('alunos');
+    }
+};
