@@ -25,6 +25,14 @@ const props = defineProps<{
         entradas: number[];
         saidas: number[];
     };
+    receitas_categoria: {
+        labels: string[];
+        series: number[];
+    };
+    despesas_categoria: {
+        labels: string[];
+        series: number[];
+    };
     balanco_unidades: {
         unidade: string;
         entradas: number;
@@ -34,6 +42,8 @@ const props = defineProps<{
     unidades: Unidade[];
     filtros: {
         unidade_id: string | number;
+        mes: number;
+        ano: number;
         periodo_de: string;
         periodo_ate: string;
     };
@@ -63,13 +73,13 @@ function formatCurrency(v: number) {
 
 const chartOptions = {
     chart: {
-        type: 'area',
+        type: 'area' as const,
         toolbar: { show: false },
         zoom: { enabled: false }
     },
     colors: ['#10b981', '#ef4444'],
     dataLabels: { enabled: false },
-    stroke: { curve: 'smooth', width: 2 },
+    stroke: { curve: 'smooth' as const, width: 2 },
     xaxis: {
         categories: props.grafico_evolucao.labels,
         labels: { style: { colors: '#94a3b8' } }
@@ -99,6 +109,36 @@ const series = [
     { name: 'Entradas', data: props.grafico_evolucao.entradas },
     { name: 'Saídas', data: props.grafico_evolucao.saidas }
 ];
+
+const pieOptions = (title: string, colors: string[]) => ({
+    chart: { type: 'donut' as const },
+    labels: [] as string[],
+    colors: colors,
+    legend: { position: 'bottom' as const, horizontalAlign: 'center' as const },
+    dataLabels: { enabled: true, formatter: (val: number) => val.toFixed(1) + '%' },
+    plotOptions: {
+        pie: {
+            donut: {
+                size: '70%',
+                labels: {
+                    show: true,
+                    total: {
+                        show: true,
+                        label: title,
+                        formatter: (w: any) => {
+                            const total = w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0);
+                            return formatCurrency(total);
+                        }
+                    }
+                }
+            }
+        }
+    },
+    tooltip: { y: { formatter: (v: number) => formatCurrency(v) } }
+});
+
+const receitasPieOptions = { ...pieOptions('Receitas', ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0']), labels: props.receitas_categoria.labels };
+const despesasPieOptions = { ...pieOptions('Despesas', ['#ef4444', '#f87171', '#fca5a5', '#fecaca']), labels: props.despesas_categoria.labels };
 </script>
 
 <template>
@@ -190,17 +230,30 @@ const series = [
                 </div>
             </div>
 
-            <div class="grid gap-6 lg:grid-cols-2">
+            <div class="grid gap-6">
                 <!-- Evolution Chart -->
                 <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
                     <h3 class="mb-6 text-lg font-bold text-foreground">Evolução Mensal</h3>
                     <div class="h-[300px]">
-                        <VueApexCharts 
-                            type="area" 
-                            height="300" 
-                            :options="chartOptions" 
-                            :series="series" 
-                        />
+                        <VueApexCharts type="area" height="300" :options="chartOptions" :series="series" />
+                    </div>
+                </div>
+
+                <!-- Category Pie Charts -->
+                <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+                        <h3 class="mb-6 text-lg font-bold text-foreground">Receitas por Categoria</h3>
+                        <div v-if="receitas_categoria.series.length > 0">
+                            <VueApexCharts type="donut" height="300" :options="receitasPieOptions" :series="receitas_categoria.series" />
+                        </div>
+                        <div v-else class="flex h-[300px] items-center justify-center text-muted-foreground italic">Sem receitas no período.</div>
+                    </div>
+                    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+                        <h3 class="mb-6 text-lg font-bold text-foreground">Despesas por Categoria</h3>
+                        <div v-if="despesas_categoria.series.length > 0">
+                            <VueApexCharts type="donut" height="300" :options="despesasPieOptions" :series="despesas_categoria.series" />
+                        </div>
+                        <div v-else class="flex h-[300px] items-center justify-center text-muted-foreground italic">Sem despesas no período.</div>
                     </div>
                 </div>
 

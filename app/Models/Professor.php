@@ -60,6 +60,11 @@ class Professor extends Model
         return $this->belongsToMany(Unidade::class, 'professor_unidade');
     }
 
+    public function especialidades(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Especialidade::class, 'especialidade_professor');
+    }
+
     public function chamadas(): HasMany
     {
         return $this->hasMany(Chamada::class);

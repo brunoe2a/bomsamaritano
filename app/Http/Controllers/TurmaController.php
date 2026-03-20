@@ -8,6 +8,7 @@ use App\Models\Turma;
 use App\Models\Curso;
 use App\Models\Professor;
 use App\Models\Voluntario;
+use App\Models\Chamada;
 use App\Models\ChamadaAluno;
 use App\Models\Unidade;
 use Carbon\Carbon;

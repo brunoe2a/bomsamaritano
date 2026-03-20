@@ -26,7 +26,7 @@ const form = useForm({
     doador_id: '' as string | number,
     descricao: '',
     valor: null as number | null,
-    data: new Date().toISOString().split('T')[0],
+    data_lancamento: new Date().toISOString().split('T')[0],
     comprovante: null as File | null,
     observacoes: '',
 });
@@ -86,7 +86,7 @@ const categoriasFiltradas = () => {
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium">Data *</label>
-                            <input v-model="form.data" type="date" required class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+                            <input v-model="form.data_lancamento" type="date" required class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium">Categoria *</label>

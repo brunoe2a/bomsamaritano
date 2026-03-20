@@ -7,6 +7,7 @@ import type { BreadcrumbItem, Unidade } from '@/types';
 
 const props = defineProps<{ 
     areasAtuacao: { id: number; nome: string }[];
+    habilidades: { id: number; nome: string }[];
     unidades: Unidade[];
 }>();
 
@@ -25,7 +26,7 @@ const form = useForm({
     whatsapp: '',
     email: '',
     area_atuacao: '',
-    habilidades: '',
+    habilidades: [] as (string | number)[],
     data_inicio: '',
     status: 'ativo',
     unidades: [] as number[],
@@ -97,8 +98,13 @@ function submit() { form.post('/voluntarios'); }
                             </select>
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="mb-1 block text-sm font-medium">Habilidades / Observações</label>
-                            <textarea v-model="form.habilidades" rows="2" class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"></textarea>
+                            <MultiSelect 
+                                v-model="form.habilidades" 
+                                :options="habilidades" 
+                                label="Habilidades" 
+                                placeholder="Selecione ou digite novas habilidades"
+                                :allow-add="true"
+                            />
                         </div>
                         <div class="sm:col-span-2">
                             <MultiSelect 

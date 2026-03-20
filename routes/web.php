@@ -54,14 +54,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Financeiro
     Route::middleware('permission:financeiro.listar')->group(function () {
-        Route::resource('financeiro', FinanceiroController::class)->except(['show']);
-        Route::resource('financeiro-categorias', FinanceiroCategoriaController::class)->except(['create', 'show', 'edit'])->parameters([
-            'financeiro-categorias' => 'financeiroCategoria'
-        ]);
         Route::get('financeiro/dashboard', [FinanceiroController::class, 'dashboard'])->name('financeiro.dashboard');
         Route::get('financeiro/doadores', [FinanceiroController::class, 'doadores'])->name('financeiro.doadores');
         Route::post('financeiro/doadores', [FinanceiroController::class, 'storeDoador'])->name('financeiro.store-doador');
         Route::delete('financeiro/doadores/{doador}', [FinanceiroController::class, 'destroyDoador'])->name('financeiro.destroy-doador');
+
+        Route::resource('financeiro', FinanceiroController::class);
+        Route::resource('financeiro-categorias', FinanceiroCategoriaController::class)->except(['create', 'show', 'edit'])->parameters([
+            'financeiro-categorias' => 'financeiroCategoria'
+        ]);
     });
 
     // Unidades

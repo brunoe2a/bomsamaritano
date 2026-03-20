@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Professor;
 use App\Models\Unidade;
+use App\Models\Especialidade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -12,7 +13,7 @@ class ProfessorController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Professor::with(['turmas', 'unidades'])->withCount('turmas');
+        $query = Professor::with(['turmas', 'unidades', 'especialidades'])->withCount('turmas');
 
         if ($request->filled('busca')) {
             $query->where('nome', 'like', "%{$request->busca}%");
@@ -45,6 +46,7 @@ class ProfessorController extends Controller
     {
         return Inertia::render('Professores/Create', [
             'unidades' => Unidade::all(),
+            'especialidades' => Especialidade::all(),
         ]);
     }
 
@@ -81,8 +83,12 @@ class ProfessorController extends Controller
         $unidades = $validated['unidades'];
         unset($validated['unidades']);
 
+        $especialidadesIds = $this->resolveEspecialidades($validated['especialidade'] ?? []);
+        $validated['especialidade'] = Especialidade::whereIn('id', $especialidadesIds)->pluck('nome')->toArray();
+
         $professor = Professor::create($validated);
         $professor->unidades()->sync($unidades);
+        $professor->especialidades()->sync($especialidadesIds);
 
         return redirect()->route('professores.index')
             ->with('success', 'Professor cadastrado com sucesso!');
@@ -90,7 +96,7 @@ class ProfessorController extends Controller
 
     public function show(Professor $professor)
     {
-        $professor->load(['turmas.curso', 'turmas.matriculas', 'unidades']);
+        $professor->load(['turmas.curso', 'turmas.matriculas', 'unidades', 'especialidades']);
 
         $aulasMes = $professor->chamadas()
             ->whereMonth('data', now()->month)
@@ -106,8 +112,9 @@ class ProfessorController extends Controller
     public function edit(Professor $professor)
     {
         return Inertia::render('Professores/Edit', [
-            'professor' => $professor->load('unidades'),
+            'professor' => $professor->load(['unidades', 'especialidades']),
             'unidades' => Unidade::all(),
+            'especialidades' => Especialidade::all(),
         ]);
     }
 
@@ -149,8 +156,12 @@ class ProfessorController extends Controller
         $unidades = $validated['unidades'];
         unset($validated['unidades']);
 
+        $especialidadesIds = $this->resolveEspecialidades($validated['especialidade'] ?? []);
+        $validated['especialidade'] = Especialidade::whereIn('id', $especialidadesIds)->pluck('nome')->toArray();
+
         $professor->update($validated);
         $professor->unidades()->sync($unidades);
+        $professor->especialidades()->sync($especialidadesIds);
 
         return redirect()->route('professores.show', $professor)
             ->with('success', 'Professor atualizado com sucesso!');
@@ -165,5 +176,21 @@ class ProfessorController extends Controller
 
         return redirect()->route('professores.index')
             ->with('success', 'Professor removido com sucesso!');
+    }
+
+    private function resolveEspecialidades($especialidadesInput)
+    {
+        if (empty($especialidadesInput)) return [];
+        
+        $ids = [];
+        foreach ($especialidadesInput as $value) {
+            if (is_numeric($value)) {
+                $ids[] = $value;
+            } else {
+                $especialidade = Especialidade::firstOrCreate(['nome' => $value]);
+                $ids[] = $especialidade->id;
+            }
+        }
+        return $ids;
     }
 }

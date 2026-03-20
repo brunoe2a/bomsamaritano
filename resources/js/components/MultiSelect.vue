@@ -7,12 +7,15 @@ interface Option {
     nome: string;
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     modelValue: (number | string)[];
     options: Option[];
     placeholder?: string;
     label?: string;
-}>();
+    allowAdd?: boolean;
+}>(), {
+    allowAdd: false,
+});
 
 const emit = defineEmits(['update:modelValue']);
 
@@ -49,11 +52,35 @@ function removeOption(id: number | string) {
     emit('update:modelValue', newValue);
 }
 
+function addNewOption() {
+    if (!search.value) return;
+    // Check if it already exists as a string in modelValue
+    if (props.modelValue.includes(search.value)) {
+        search.value = '';
+        return;
+    }
+    // Check if it already exists in options
+    const existing = props.options.find(opt => opt.nome.toLowerCase() === search.value.toLowerCase());
+    if (existing) {
+        toggleOption(existing.id);
+    } else {
+        const newValue = [...props.modelValue, search.value];
+        emit('update:modelValue', newValue);
+    }
+    search.value = '';
+}
+
 const selectedOptions = ref<Option[]>([]);
 watch([() => props.modelValue, () => props.options], () => {
-    selectedOptions.value = props.options.filter(opt => 
+    const existingOptions = props.options.filter(opt => 
         props.modelValue.includes(opt.id)
     );
+    
+    const newOptions = props.modelValue
+        .filter(val => typeof val === 'string' && !props.options.some(opt => opt.id === val))
+        .map(val => ({ id: val, nome: val.toString() }));
+
+    selectedOptions.value = [...existingOptions, ...newOptions];
 }, { immediate: true });
 
 function handleClickOutside(event: MouseEvent) {
@@ -116,6 +143,7 @@ onUnmounted(() => {
                     <input 
                         v-model="search"
                         @click.stop
+                        @keydown.enter.prevent="addNewOption"
                         type="text" 
                         placeholder="Pesquisar..." 
                         class="h-9 w-full rounded-md border-none bg-muted/50 pl-9 pr-3 text-sm outline-none focus:bg-muted"
@@ -138,8 +166,16 @@ onUnmounted(() => {
                     />
                 </div>
                 
-                <div v-if="filteredOptions.length === 0" class="py-4 text-center text-xs text-muted-foreground">
-                    Nenhum resultado encontrado.
+                <div v-if="filteredOptions.length === 0" class="py-4 text-center">
+                    <p class="mb-2 text-xs text-muted-foreground">Nenhum resultado encontrado.</p>
+                    <button 
+                        v-if="allowAdd && search" 
+                        type="button"
+                        @click.stop="addNewOption"
+                        class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                    >
+                        Adicionar "{{ search }}"
+                    </button>
                 </div>
             </div>
         </div>

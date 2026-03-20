@@ -55,9 +55,15 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <div v-if="professor.cpf" class="text-muted-foreground">CPF: {{ professor.cpf }}</div>
                         <div v-if="professor.data_inicio" class="text-muted-foreground">Início: {{ new Date(professor.data_inicio).toLocaleDateString('pt-BR') }}</div>
                         <div class="mt-3">
+                            <p class="mb-1 text-xs font-medium text-muted-foreground">Unidades de Atuação</p>
+                            <div class="flex flex-wrap gap-1">
+                                <span v-for="u in (professor.unidades || [])" :key="u.id" class="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">{{ u.nome }}</span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
                             <p class="mb-1 text-xs font-medium text-muted-foreground">Especialidades</p>
                             <div class="flex flex-wrap gap-1">
-                                <span v-for="e in (professor.especialidade || [])" :key="e" class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{{ e }}</span>
+                                <span v-for="e in (professor.especialidades || [])" :key="e.id" class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{{ e.nome }}</span>
                             </div>
                         </div>
                     </div>

@@ -26,7 +26,7 @@ class Voluntario extends Model
         'endereco_estado',
         'endereco_cep',
         'area_atuacao',
-        'habilidades',
+        'habilidade',
         'data_inicio',
         'status',
     ];
@@ -52,5 +52,10 @@ class Voluntario extends Model
     public function unidades(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Unidade::class, 'unidade_voluntario');
+    }
+
+    public function habilidades(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Habilidade::class, 'habilidade_voluntario');
     }
 }

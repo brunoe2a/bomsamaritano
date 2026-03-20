@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ref, watch, computed } from 'vue';
-import { Plus, Pencil, Trash2, Search, TrendingUp, TrendingDown, DollarSign, Users, FileSpreadsheet, FileText, List, X, PieChart } from 'lucide-vue-next';
+import { Plus, Pencil, Trash2, Search, TrendingUp, TrendingDown, DollarSign, Users, FileSpreadsheet, FileText, List, X, PieChart, Eye } from 'lucide-vue-next';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
@@ -263,8 +263,9 @@ const meses = [
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-1">
-                                        <Link :href="`/financeiro/${l.id}/edit`" class="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"><Pencil class="h-4 w-4" /></Link>
-                                        <button @click="confirmDelete(l)" class="rounded-lg p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600"><Trash2 class="h-4 w-4" /></button>
+                                        <Link :href="`/financeiro/${l.id}`" class="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" title="Ver Detalhes"><Eye class="h-4 w-4" /></Link>
+                                        <Link :href="`/financeiro/${l.id}/edit`" class="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"><Pencil class="h-4 w-4" /></Link>
+                                        <button @click="confirmDelete(l)" class="rounded-lg p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"><Trash2 class="h-4 w-4" /></button>
                                     </div>
                                 </td>
                             </tr>

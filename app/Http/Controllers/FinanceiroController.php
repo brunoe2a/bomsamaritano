@@ -84,12 +84,13 @@ class FinanceiroController extends Controller
             'doador_id' => 'nullable|exists:doadores,id',
             'descricao' => 'required|string|max:255',
             'valor' => 'required|numeric|min:0.01',
-            'data' => 'required|date',
+            'data_lancamento' => 'required|date',
             'comprovante' => 'nullable|file|max:5120',
             'unidade_id' => 'required|exists:unidades,id',
             'observacoes' => 'nullable|string',
         ]);
 
+        $validated['data'] = $validated['data_lancamento'];
         $validated['user_id'] = auth()->id();
 
         if ($request->hasFile('comprovante')) {
@@ -100,6 +101,13 @@ class FinanceiroController extends Controller
 
         return redirect()->route('financeiro.index')
             ->with('success', 'Lançamento registrado com sucesso!');
+    }
+
+    public function show(FinanceiroLancamento $financeiro)
+    {
+        return Inertia::render('Financeiro/Show', [
+            'lancamento' => $financeiro->load(['categoria', 'doador', 'unidade', 'usuario']),
+        ]);
     }
 
     public function edit(FinanceiroLancamento $financeiro)
@@ -120,11 +128,13 @@ class FinanceiroController extends Controller
             'doador_id' => 'nullable|exists:doadores,id',
             'descricao' => 'required|string|max:255',
             'valor' => 'required|numeric|min:0.01',
-            'data' => 'required|date',
+            'data_lancamento' => 'required|date',
             'comprovante' => 'nullable|file|max:5120',
             'unidade_id' => 'required|exists:unidades,id',
             'observacoes' => 'nullable|string',
         ]);
+
+        $validated['data'] = $validated['data_lancamento'];
 
         if ($request->hasFile('comprovante')) {
             if ($financeiro->comprovante) {
@@ -181,7 +191,20 @@ class FinanceiroController extends Controller
         ->orderBy('mes')
         ->get();
 
-        // Saldo por unidade
+        // Distribuição por categoria (para gráficos de pizza)
+        $distribuicaoCategorias = (clone $query)->join('financeiro_categorias', 'financeiro_lancamentos.categoria_id', '=', 'financeiro_categorias.id')
+            ->selectRaw("
+                financeiro_categorias.nome,
+                financeiro_categorias.tipo as categoria_tipo,
+                SUM(financeiro_lancamentos.valor) as total
+            ")
+            ->groupBy('financeiro_categorias.nome', 'categoria_tipo')
+            ->get();
+
+        $receitasPorCategoria = $distribuicaoCategorias->where('categoria_tipo', 'receita')->values();
+        $despesasPorCategoria = $distribuicaoCategorias->where('categoria_tipo', 'despesa')->values();
+
+        // Saldo por unidade (reutilizando a lógica anterior mas garantindo os tipos)
         $saldoUnidades = Unidade::with(['lancamentos' => function($q) use ($mes, $ano) {
             $q->whereMonth('data', $mes)->whereYear('data', $ano);
         }])->get()->map(function($unidade) {
@@ -199,15 +222,34 @@ class FinanceiroController extends Controller
             'filtros' => [
                 'mes' => (int) $mes,
                 'ano' => (int) $ano,
-                'unidade_id' => $unidadeId
+                'unidade_id' => $unidadeId,
+                'periodo_de' => $request->periodo_de ?? '',
+                'periodo_ate' => $request->periodo_ate ?? '',
             ],
-            'resumo' => [
-                'entradas' => (float) ($resumo->entradas ?? 0),
-                'saidas' => (float) ($resumo->saidas ?? 0),
-                'saldo' => (float) (($resumo->entradas ?? 0) - ($resumo->saidas ?? 0)),
+            'kpis' => [
+                'total_entradas' => (float) ($resumo->entradas ?? 0),
+                'total_saidas' => (float) ($resumo->saidas ?? 0),
+                'saldo_total' => (float) (($resumo->entradas ?? 0) - ($resumo->saidas ?? 0)),
             ],
-            'evolucao' => $evolucao,
-            'saldoUnidades' => $saldoUnidades,
+            'grafico_evolucao' => [
+                'labels' => $evolucao->map(fn($e) => date('M/Y', mktime(0, 0, 0, $e->mes, 1, $e->ano)))->toArray(),
+                'entradas' => $evolucao->pluck('entradas')->map(fn($v) => (float)$v)->toArray(),
+                'saidas' => $evolucao->pluck('saidas')->map(fn($v) => (float)$v)->toArray(),
+            ],
+            'balanco_unidades' => $saldoUnidades->map(fn($s) => [
+                'unidade' => $s['nome'],
+                'entradas' => $s['entradas'],
+                'saidas' => $s['saidas'],
+                'saldo' => $s['saldo'],
+            ]),
+            'receitas_categoria' => [
+                'labels' => $receitasPorCategoria->pluck('nome'),
+                'series' => $receitasPorCategoria->pluck('total')->map(fn($v) => (float)$v),
+            ],
+            'despesas_categoria' => [
+                'labels' => $despesasPorCategoria->pluck('nome'),
+                'series' => $despesasPorCategoria->pluck('total')->map(fn($v) => (float)$v),
+            ],
             'unidades' => Unidade::all(),
         ]);
     }

@@ -150,8 +150,9 @@ function deleteArea(id: number) {
                         </div>
                         <StatusBadge :status="vol.status" size="sm" />
                     </div>
-                    <div v-if="vol.unidades?.length" class="mb-3 flex flex-wrap gap-1">
+                    <div v-if="vol.unidades?.length || vol.habilidades?.length" class="mb-3 flex flex-wrap gap-1">
                         <span v-for="u in vol.unidades" :key="u.id" class="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{{ u.nome }}</span>
+                        <span v-for="h in vol.habilidades" :key="h.id" class="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary uppercase tracking-wider">{{ h.nome }}</span>
                     </div>
                     <div class="flex justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                         <Link :href="`/voluntarios/${vol.id}`" class="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"><Eye class="h-4 w-4" /></Link>

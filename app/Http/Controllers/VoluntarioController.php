@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Voluntario;
 use App\Models\Unidade;
+use App\Models\Habilidade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -12,7 +13,7 @@ class VoluntarioController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Voluntario::with('unidades');
+        $query = Voluntario::with(['unidades', 'habilidades']);
 
         if ($request->filled('busca')) {
             $query->where('nome', 'like', "%{$request->busca}%");
@@ -45,6 +46,7 @@ class VoluntarioController extends Controller
     {
         return Inertia::render('Voluntarios/Create', [
             'areasAtuacao' => \App\Models\AreaAtuacao::orderBy('nome')->get(),
+            'habilidades' => Habilidade::all(),
             'unidades' => Unidade::all(),
         ]);
     }
@@ -68,7 +70,7 @@ class VoluntarioController extends Controller
             'endereco_estado' => 'nullable|string|max:2',
             'endereco_cep' => 'nullable|string|max:10',
             'area_atuacao' => 'nullable|string|max:255',
-            'habilidades' => 'nullable|string',
+            'habilidades' => 'nullable|array',
             'data_inicio' => 'nullable|date',
             'status' => 'required|in:ativo,inativo',
             'unidades' => 'required|array|min:1',
@@ -82,8 +84,13 @@ class VoluntarioController extends Controller
         $unidades = $validated['unidades'];
         unset($validated['unidades']);
 
+        $habilidadesIds = $this->resolveHabilidades($validated['habilidades'] ?? []);
+        $validated['habilidade'] = implode(', ', Habilidade::whereIn('id', $habilidadesIds)->pluck('nome')->toArray());
+        unset($validated['habilidades']);
+
         $voluntario = Voluntario::create($validated);
         $voluntario->unidades()->sync($unidades);
+        $voluntario->habilidades()->sync($habilidadesIds);
 
         return redirect()->route('voluntarios.index')
             ->with('success', 'Voluntário cadastrado com sucesso!');
@@ -92,15 +99,16 @@ class VoluntarioController extends Controller
     public function show(Voluntario $voluntario)
     {
         return Inertia::render('Voluntarios/Show', [
-            'voluntario' => $voluntario->load('unidades'),
+            'voluntario' => $voluntario->load(['unidades', 'habilidades']),
         ]);
     }
 
     public function edit(Voluntario $voluntario)
     {
         return Inertia::render('Voluntarios/Edit', [
-            'voluntario' => $voluntario->load('unidades'),
+            'voluntario' => $voluntario->load(['unidades', 'habilidades']),
             'areasAtuacao' => \App\Models\AreaAtuacao::orderBy('nome')->get(),
+            'habilidades' => Habilidade::all(),
             'unidades' => Unidade::all(),
         ]);
     }
@@ -124,7 +132,7 @@ class VoluntarioController extends Controller
             'endereco_estado' => 'nullable|string|max:2',
             'endereco_cep' => 'nullable|string|max:10',
             'area_atuacao' => 'nullable|string|max:255',
-            'habilidades' => 'nullable|string',
+            'habilidades' => 'nullable|array',
             'data_inicio' => 'nullable|date',
             'status' => 'required|in:ativo,inativo',
             'unidades' => 'required|array|min:1',
@@ -143,8 +151,13 @@ class VoluntarioController extends Controller
         $unidades = $validated['unidades'];
         unset($validated['unidades']);
 
+        $habilidadesIds = $this->resolveHabilidades($validated['habilidades'] ?? []);
+        $validated['habilidade'] = implode(', ', Habilidade::whereIn('id', $habilidadesIds)->pluck('nome')->toArray());
+        unset($validated['habilidades']);
+
         $voluntario->update($validated);
         $voluntario->unidades()->sync($unidades);
+        $voluntario->habilidades()->sync($habilidadesIds);
 
         return redirect()->route('voluntarios.show', $voluntario)
             ->with('success', 'Voluntário atualizado com sucesso!');
@@ -159,5 +172,21 @@ class VoluntarioController extends Controller
 
         return redirect()->route('voluntarios.index')
             ->with('success', 'Voluntário removido com sucesso!');
+    }
+
+    private function resolveHabilidades($habilidadesInput)
+    {
+        if (empty($habilidadesInput)) return [];
+        
+        $ids = [];
+        foreach ($habilidadesInput as $value) {
+            if (is_numeric($value)) {
+                $ids[] = $value;
+            } else {
+                $habilidade = Habilidade::firstOrCreate(['nome' => $value]);
+                $ids[] = $habilidade->id;
+            }
+        }
+        return $ids;
     }
 }

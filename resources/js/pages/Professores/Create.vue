@@ -3,10 +3,11 @@ import { Head, useForm, Link } from '@inertiajs/vue3';
 import { ArrowLeft } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import MultiSelect from '@/components/MultiSelect.vue';
-import type { BreadcrumbItem, Unidade } from '@/types';
+import type { BreadcrumbItem, Unidade, Especialidade } from '@/types';
 
 const props = defineProps<{
     unidades: Unidade[];
+    especialidades: Especialidade[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -24,14 +25,12 @@ const form = useForm({
     telefone: '',
     whatsapp: '',
     email: '',
-    especialidade: [] as string[],
+    especialidade: [] as (string | number)[],
     tipo_vinculo: 'voluntario',
     data_inicio: '',
     status: 'ativo',
     unidades: [] as number[],
 });
-
-const especialidades = ['Português', 'Matemática', 'Inglês', 'Violão', 'Informática', 'Reforço Escolar'];
 
 function handleFoto(e: Event) {
     const t = e.target as HTMLInputElement;
@@ -102,13 +101,13 @@ function submit() {
                             </select>
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="mb-2 block text-sm font-medium">Especialidades</label>
-                            <div class="flex flex-wrap gap-2">
-                                <label v-for="e in especialidades" :key="e" class="flex cursor-pointer items-center gap-1 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.especialidade.includes(e) ? 'border-primary bg-primary/10 text-primary' : 'hover:bg-muted'">
-                                    <input type="checkbox" :value="e" v-model="form.especialidade" class="sr-only" />
-                                    {{ e }}
-                                </label>
-                            </div>
+                            <MultiSelect 
+                                v-model="form.especialidade" 
+                                :options="especialidades" 
+                                label="Especialidades" 
+                                placeholder="Selecione ou digite novas especialidades"
+                                :allow-add="true"
+                            />
                         </div>
                         <div class="sm:col-span-2">
                             <MultiSelect 

@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import type { Voluntario, BreadcrumbItem } from '@/types';
 
-const props = defineProps<{ voluntario: Voluntario & { telefone?: string; whatsapp?: string; email?: string; cpf?: string; data_inicio?: string; habilidades?: string; area_atuacao?: string } }>();
+const props = defineProps<{ voluntario: Voluntario }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -50,9 +50,23 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <div v-if="voluntario.cpf" class="text-sm text-muted-foreground">CPF: {{ voluntario.cpf }}</div>
                     <div v-if="voluntario.data_inicio" class="text-sm text-muted-foreground">Início: {{ new Date(voluntario.data_inicio).toLocaleDateString('pt-BR') }}</div>
                 </div>
-                <div v-if="voluntario.habilidades" class="mt-4">
-                    <p class="text-xs font-medium text-muted-foreground">Habilidades / Observações</p>
-                    <p class="mt-1 whitespace-pre-wrap text-sm text-foreground">{{ voluntario.habilidades }}</p>
+                <div class="mt-4 border-t border-border pt-4 grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <p class="mb-2 text-xs font-medium text-muted-foreground uppercase">Unidades de Atuação</p>
+                        <div class="flex flex-wrap gap-1">
+                            <span v-for="u in (voluntario.unidades || [])" :key="u.id" class="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground shadow-sm">{{ u.nome }}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="mb-2 text-xs font-medium text-muted-foreground uppercase">Habilidades / Especialidades</p>
+                        <div class="flex flex-wrap gap-1">
+                            <template v-if="voluntario.habilidades?.length">
+                                <span v-for="h in voluntario.habilidades" :key="h.id" class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary border border-primary/20">{{ h.nome }}</span>
+                            </template>
+                            <span v-else-if="voluntario.habilidade" class="text-sm text-foreground italic">{{ voluntario.habilidade }}</span>
+                            <span v-else class="text-xs text-muted-foreground">Nenhuma habilidade informada.</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

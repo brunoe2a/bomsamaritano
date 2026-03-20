@@ -78,7 +78,7 @@ function formatDate(date: string): string {
 <template>
     <Head title="Chamada" />
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-2xl p-4 md:p-6">
+        <div class="mx-auto w-full p-4 md:p-6">
             <!-- Header -->
             <div class="mb-6 flex items-center gap-3">
                 <Link :href="`/turmas/${turma.id}`" class="flex h-9 w-9 items-center justify-center rounded-lg border border-border hover:bg-muted">

@@ -1,3 +1,8 @@
+export type Especialidade = {
+    id: number;
+    nome: string;
+};
+
 export type Responsavel = {
     id: number;
     nome: string;
@@ -61,6 +66,7 @@ export type Professor = {
     whatsapp?: string;
     email?: string;
     especialidade?: string[];
+    especialidades?: Especialidade[];
     tipo_vinculo: 'voluntario' | 'contratado';
     data_inicio?: string;
     status: 'ativo' | 'inativo';
@@ -121,9 +127,30 @@ export type Voluntario = {
     id: number;
     nome: string;
     foto?: string;
+    cpf?: string;
+    rg?: string;
+    data_nascimento?: string;
+    telefone?: string;
+    whatsapp?: string;
+    email?: string;
+    endereco_rua?: string;
+    endereco_numero?: string;
+    endereco_complemento?: string;
+    endereco_bairro?: string;
+    endereco_cidade?: string;
+    endereco_estado?: string;
+    endereco_cep?: string;
     area_atuacao?: string;
+    habilidade?: string; // Coluna habilidade original (singular)
+    habilidades?: Habilidade[]; // Novo relacionamento (plural)
+    data_inicio?: string;
     status: 'ativo' | 'inativo';
     unidades?: Unidade[];
+};
+
+export type Habilidade = {
+    id: number;
+    nome: string;
 };
 
 export type DashboardStats = {
@@ -152,15 +179,31 @@ export type Aniversariante = {
     foto?: string;
 };
 
-export type MovimentacaoFinanceira = {
+export type FinanceiroCategoria = {
     id: number;
+    nome: string;
+    tipo: 'receita' | 'despesa';
+    descricao?: string;
+};
+
+export type FinanceiroLancamento = {
+    id: number;
+    tipo: 'entrada' | 'saida';
+    categoria_id: number;
+    categoria?: FinanceiroCategoria;
+    doador_id?: number;
+    doador?: Doador;
     descricao: string;
     valor: number;
-    tipo: 'entrada' | 'saida';
     data: string;
-    categoria?: string;
+    comprovante?: string;
+    user_id: number;
+    usuario?: { name: string };
     unidade_id: number;
     unidade?: Unidade;
+    observacoes?: string;
+    created_at: string;
+    updated_at: string;
 };
 
 export type Unidade = {
@@ -181,4 +224,16 @@ export type PaginatedData<T> = {
     per_page: number;
     total: number;
     links: { url: string | null; label: string; active: boolean }[];
+};
+
+export type Doador = {
+    id: number;
+    nome: string;
+    tipo: 'pessoa_fisica' | 'pessoa_juridica';
+    cpf_cnpj?: string;
+    telefone?: string;
+    email?: string;
+    endereco?: string;
+    created_at: string;
+    updated_at: string;
 };

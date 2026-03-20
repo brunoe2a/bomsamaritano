@@ -8,6 +8,7 @@ import type { Voluntario, BreadcrumbItem, Unidade } from '@/types';
 const props = defineProps<{ 
     voluntario: Voluntario;
     areasAtuacao: { id: number; nome: string }[];
+    habilidades: { id: number; nome: string }[];
     unidades: Unidade[];
 }>();
 
@@ -26,7 +27,7 @@ const form = useForm({
     whatsapp: props.voluntario.whatsapp || '',
     email: props.voluntario.email || '',
     area_atuacao: props.voluntario.area_atuacao || '',
-    habilidades: props.voluntario.habilidades || '',
+    habilidades: props.voluntario.habilidades?.map((h: any) => h.id) || props.voluntario.habilidade?.split(',').map((s: string) => s.trim()).filter(Boolean) || [] as (string | number)[],
     data_inicio: props.voluntario.data_inicio?.split('T')[0] || '',
     status: props.voluntario.status,
     unidades: props.voluntario.unidades?.map((u: any) => u.id) || [],
@@ -110,8 +111,13 @@ function submit() {
                             </select>
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="mb-1 block text-sm font-medium">Habilidades</label>
-                            <textarea v-model="form.habilidades" rows="2" class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"></textarea>
+                            <MultiSelect 
+                                v-model="form.habilidades" 
+                                :options="habilidades" 
+                                label="Habilidades" 
+                                placeholder="Selecione ou digite novas habilidades"
+                                :allow-add="true"
+                            />
                         </div>
                         <div class="sm:col-span-2">
                             <MultiSelect 

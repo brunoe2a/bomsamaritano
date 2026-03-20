@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3';
+import { ArrowLeft } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import MultiSelect from '@/components/MultiSelect.vue';
-import type { Professor, BreadcrumbItem, Unidade } from '@/types';
+import type { Professor, BreadcrumbItem, Unidade, Especialidade } from '@/types';
 
 const props = defineProps<{ 
     professor: Professor;
     unidades: Unidade[];
+    especialidades: Especialidade[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -23,14 +25,12 @@ const form = useForm({
     telefone: props.professor.telefone || '',
     whatsapp: props.professor.whatsapp || '',
     email: props.professor.email || '',
-    especialidade: props.professor.especialidade || [],
+    especialidade: props.professor.especialidades?.map(e => e.id) || props.professor.especialidade || [] as (string | number)[],
     tipo_vinculo: props.professor.tipo_vinculo,
     data_inicio: props.professor.data_inicio?.split('T')[0] || '',
     status: props.professor.status,
     unidades: (props.professor as any).unidades?.map((u: any) => u.id) || [],
 });
-
-const especialidades = ['Português', 'Matemática', 'Inglês', 'Violão', 'Informática', 'Reforço Escolar'];
 
 function handleFoto(e: Event) {
     const t = e.target as HTMLInputElement;
@@ -110,13 +110,13 @@ function submit() {
                             </select>
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="mb-2 block text-sm font-medium">Especialidades</label>
-                            <div class="flex flex-wrap gap-2">
-                                <label v-for="e in especialidades" :key="e" class="flex cursor-pointer items-center gap-1 rounded-lg border border-input px-3 py-2 text-sm" :class="form.especialidade.includes(e) ? 'border-primary bg-primary/10 text-primary' : 'hover:bg-muted'">
-                                    <input type="checkbox" :value="e" v-model="form.especialidade" class="sr-only" />
-                                    {{ e }}
-                                </label>
-                            </div>
+                            <MultiSelect 
+                                v-model="form.especialidade" 
+                                :options="especialidades" 
+                                label="Especialidades" 
+                                placeholder="Selecione ou digite novas especialidades"
+                                :allow-add="true"
+                            />
                         </div>
                         <div class="sm:col-span-2">
                             <MultiSelect 

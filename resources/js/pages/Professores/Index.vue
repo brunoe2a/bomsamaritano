@@ -90,8 +90,13 @@ function confirmDelete(p: Professor) {
                         </div>
                         <div class="min-w-0 flex-1">
                             <h3 class="truncate text-base font-semibold text-foreground">{{ prof.nome }}</h3>
-                            <div class="mt-1 flex flex-wrap gap-1">
-                                <span v-for="e in (prof.especialidade || [])" :key="e" class="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">{{ e }}</span>
+                            <div v-if="prof.especialidades?.length || prof.especialidade?.length" class="mt-2 flex flex-wrap gap-1">
+                                <template v-if="prof.especialidades?.length">
+                                    <span v-for="e in prof.especialidades" :key="e.id" class="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary uppercase tracking-wider">{{ e.nome }}</span>
+                                </template>
+                                <template v-else-if="Array.isArray(prof.especialidade)">
+                                    <span v-for="e in prof.especialidade" :key="e" class="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary uppercase tracking-wider">{{ e }}</span>
+                                </template>
                             </div>
                         </div>
                     </div>
