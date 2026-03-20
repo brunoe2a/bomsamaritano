@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ref, watch, computed } from 'vue';
-import { Plus, Pencil, Trash2, Search, TrendingUp, TrendingDown, DollarSign, Users, FileSpreadsheet, FileText, List, X } from 'lucide-vue-next';
+import { Plus, Pencil, Trash2, Search, TrendingUp, TrendingDown, DollarSign, Users, FileSpreadsheet, FileText, List, X, PieChart } from 'lucide-vue-next';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import Pagination from '@/components/Pagination.vue';
 import { useSwal } from '@/composables/useSwal';
-import type { PaginatedData, BreadcrumbItem } from '@/types';
+import type { PaginatedData, BreadcrumbItem, Unidade } from '@/types';
 
 const { confirmDelete: swalDelete } = useSwal();
 
@@ -15,6 +15,7 @@ type Categoria = { id: number; nome: string; tipo: string };
 type Lancamento = {
     id: number; tipo: string; descricao: string; valor: number;
     data: string; categoria?: Categoria; doador?: { nome: string };
+    unidade?: { nome: string };
     usuario?: { name: string };
 };
 
@@ -22,6 +23,7 @@ const props = defineProps<{
     lancamentos: PaginatedData<Lancamento>;
     filtros: Record<string, string>;
     categorias: Categoria[];
+    unidades: Unidade[];
     resumo: { entradas: number; saidas: number; saldo: number };
 }>();
 
@@ -33,6 +35,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const busca = ref(props.filtros.busca || '');
 const tipo = ref(props.filtros.tipo || '');
 const categoriaId = ref(props.filtros.categoria_id || '');
+const unidadeId = ref(props.filtros.unidade_id || '');
 const mes = ref(props.filtros.mes || '');
 const ano = ref(props.filtros.ano || '');
 
@@ -44,12 +47,13 @@ function applyFilters() {
             busca: busca.value || undefined,
             tipo: tipo.value || undefined,
             categoria_id: categoriaId.value || undefined,
+            unidade_id: unidadeId.value || undefined,
             mes: mes.value || undefined,
             ano: ano.value || undefined,
         }, { preserveState: true, replace: true });
     }, 300);
 }
-watch([busca, tipo, categoriaId, mes, ano], applyFilters);
+watch([busca, tipo, categoriaId, unidadeId, mes, ano], applyFilters);
 
 function formatCurrency(v: number) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
@@ -153,6 +157,9 @@ const meses = [
                     <button @click="openCategoriasModal" class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium hover:bg-muted">
                         <List class="h-4 w-4" /> Categorias
                     </button>
+                    <Link href="/financeiro/dashboard" class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium hover:bg-muted">
+                        <PieChart class="h-4 w-4" /> Painel
+                    </Link>
                     <Link href="/financeiro/doadores" class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium hover:bg-muted">
                         <Users class="h-4 w-4" /> Doadores
                     </Link>
@@ -216,6 +223,10 @@ const meses = [
                     <option value="">Todas as categorias</option>
                     <option v-for="c in categorias" :key="c.id" :value="c.id">{{ c.nome }} ({{ c.tipo === 'receita' ? '↑' : '↓' }})</option>
                 </select>
+                <select v-model="unidadeId" class="h-10 rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                    <option value="">Todas as unidades</option>
+                    <option v-for="u in unidades" :key="u.id" :value="u.id">{{ u.nome }}</option>
+                </select>
                 <select v-model="mes" class="h-10 rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
                     <option value="">Todos os meses</option>
                     <option v-for="m in meses" :key="m.value" :value="m.value">{{ m.label }}</option>
@@ -232,6 +243,7 @@ const meses = [
                                 <th class="px-4 py-3 text-left font-medium text-muted-foreground">Descrição</th>
                                 <th class="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">Categoria</th>
                                 <th class="px-4 py-3 text-left font-medium text-muted-foreground">Tipo</th>
+                                <th class="hidden px-4 py-3 text-left font-medium text-muted-foreground lg:table-cell">Unidade</th>
                                 <th class="px-4 py-3 text-right font-medium text-muted-foreground">Valor</th>
                                 <th class="px-4 py-3 text-right font-medium text-muted-foreground">Ações</th>
                             </tr>
@@ -245,6 +257,7 @@ const meses = [
                                 </td>
                                 <td class="hidden px-4 py-3 text-muted-foreground md:table-cell">{{ l.categoria?.nome || '-' }}</td>
                                 <td class="px-4 py-3"><StatusBadge :status="l.tipo" size="sm" /></td>
+                                <td class="hidden px-4 py-3 text-muted-foreground lg:table-cell">{{ l.unidade?.nome || '-' }}</td>
                                 <td class="px-4 py-3 text-right font-bold" :class="l.tipo === 'entrada' ? 'text-emerald-600' : 'text-red-600'">
                                     {{ l.tipo === 'entrada' ? '+' : '-' }}{{ formatCurrency(Number(l.valor)) }}
                                 </td>

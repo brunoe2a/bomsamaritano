@@ -2,7 +2,7 @@
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { ArrowLeft } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem } from '@/types';
+import type { BreadcrumbItem, Unidade } from '@/types';
 
 type Categoria = { id: number; nome: string; tipo: string };
 type Doador = { id: number; nome: string; tipo: string };
@@ -10,6 +10,7 @@ type Doador = { id: number; nome: string; tipo: string };
 const props = defineProps<{
     categorias: Categoria[];
     doadores: Doador[];
+    unidades: Unidade[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -20,6 +21,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const form = useForm({
     tipo: 'entrada' as string,
+    unidade_id: 1 as number,
     categoria_id: '' as string | number,
     doador_id: '' as string | number,
     descricao: '',
@@ -75,6 +77,12 @@ const categoriasFiltradas = () => {
                         <div>
                             <label class="mb-1 block text-sm font-medium">Valor (R$) *</label>
                             <input v-model.number="form.valor" type="number" step="0.01" min="0.01" required class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-medium">Unidade *</label>
+                            <select v-model="form.unidade_id" required class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                                <option v-for="u in unidades" :key="u.id" :value="u.id">{{ u.nome }}</option>
+                            </select>
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium">Data *</label>

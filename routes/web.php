@@ -10,6 +10,7 @@ use App\Http\Controllers\TurmaController;
 use App\Http\Controllers\VoluntarioController;
 use App\Http\Controllers\AreaAtuacaoController;
 use App\Http\Controllers\FinanceiroCategoriaController;
+use App\Http\Controllers\UnidadeController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -57,9 +58,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('financeiro-categorias', FinanceiroCategoriaController::class)->except(['create', 'show', 'edit'])->parameters([
             'financeiro-categorias' => 'financeiroCategoria'
         ]);
+        Route::get('financeiro/dashboard', [FinanceiroController::class, 'dashboard'])->name('financeiro.dashboard');
         Route::get('financeiro/doadores', [FinanceiroController::class, 'doadores'])->name('financeiro.doadores');
         Route::post('financeiro/doadores', [FinanceiroController::class, 'storeDoador'])->name('financeiro.store-doador');
         Route::delete('financeiro/doadores/{doador}', [FinanceiroController::class, 'destroyDoador'])->name('financeiro.destroy-doador');
+    });
+
+    // Unidades
+    Route::middleware('permission:unidades.listar')->group(function () {
+        Route::resource('unidades', UnidadeController::class);
     });
 
     // Usuários (Somente Admins)

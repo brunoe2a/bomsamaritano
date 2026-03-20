@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import Pagination from '@/components/Pagination.vue';
 import { useSwal } from '@/composables/useSwal';
-import type { Turma, Curso, PaginatedData, BreadcrumbItem } from '@/types';
+import type { Turma, Curso, PaginatedData, BreadcrumbItem, Unidade } from '@/types';
 
 const { confirmDelete: swalDelete } = useSwal();
 
@@ -14,6 +14,7 @@ const props = defineProps<{
     turmas: PaginatedData<Turma>;
     filtros: Record<string, string>;
     cursos: Curso[];
+    unidades: Unidade[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -24,6 +25,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const busca = ref(props.filtros.busca || '');
 const cursoId = ref(props.filtros.curso_id || '');
 const status = ref(props.filtros.status || '');
+const unidadeId = ref(props.filtros.unidade_id || '');
 
 let debounceTimeout: ReturnType<typeof setTimeout>;
 function applyFilters() {
@@ -33,10 +35,11 @@ function applyFilters() {
             busca: busca.value || undefined,
             curso_id: cursoId.value || undefined,
             status: status.value || undefined,
+            unidade_id: unidadeId.value || undefined,
         }, { preserveState: true, replace: true });
     }, 300);
 }
-watch([busca, cursoId, status], applyFilters);
+watch([busca, cursoId, status, unidadeId], applyFilters);
 
 const periodoLabels: Record<string, string> = { segunda_sexta: 'Seg-Sex', sabados: 'Sábados' };
 
@@ -74,6 +77,10 @@ function confirmDelete(turma: Turma) {
                     <option value="em_andamento">Em Andamento</option>
                     <option value="encerrada">Encerrada</option>
                 </select>
+                <select v-model="unidadeId" class="h-10 rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                    <option value="">Todas as unidades</option>
+                    <option v-for="u in unidades" :key="u.id" :value="u.id">{{ u.nome }}</option>
+                </select>
             </div>
 
             <div class="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
@@ -82,6 +89,7 @@ function confirmDelete(turma: Turma) {
                         <thead>
                             <tr class="border-b border-border bg-muted/50">
                                 <th class="px-4 py-3 text-left font-medium text-muted-foreground">Turma</th>
+                                <th class="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">Unidade</th>
                                 <th class="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">Curso</th>
                                 <th class="hidden px-4 py-3 text-left font-medium text-muted-foreground sm:table-cell">Professor</th>
                                 <th class="hidden px-4 py-3 text-left font-medium text-muted-foreground lg:table-cell">Horário</th>
@@ -96,6 +104,7 @@ function confirmDelete(turma: Turma) {
                                     <p class="font-medium text-foreground">{{ turma.nome }}</p>
                                     <p class="text-xs text-muted-foreground md:hidden">{{ turma.curso?.nome }}</p>
                                 </td>
+                                <td class="hidden px-4 py-3 text-muted-foreground md:table-cell">{{ turma.unidade?.nome || '-' }}</td>
                                 <td class="hidden px-4 py-3 text-muted-foreground md:table-cell">{{ turma.curso?.nome }}</td>
                                 <td class="hidden px-4 py-3 text-muted-foreground sm:table-cell">
                                     <template v-if="turma.professores?.length">

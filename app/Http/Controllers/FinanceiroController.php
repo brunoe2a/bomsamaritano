@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Doador;
 use App\Models\FinanceiroCategoria;
 use App\Models\FinanceiroLancamento;
+use App\Models\Unidade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -13,7 +14,7 @@ class FinanceiroController extends Controller
 {
     public function index(Request $request)
     {
-        $query = FinanceiroLancamento::with(['categoria', 'doador', 'usuario']);
+        $query = FinanceiroLancamento::with(['categoria', 'doador', 'usuario', 'unidade']);
 
         if ($request->filled('busca')) {
             $query->where('descricao', 'like', "%{$request->busca}%");
@@ -35,6 +36,10 @@ class FinanceiroController extends Controller
             $query->whereYear('data', $request->ano);
         }
 
+        if ($request->filled('unidade_id')) {
+            $query->where('unidade_id', $request->unidade_id);
+        }
+
         $lancamentos = $query->latest('data')->paginate(20)->withQueryString();
 
         // Resumo financeiro do mês atual
@@ -51,8 +56,9 @@ class FinanceiroController extends Controller
 
         return Inertia::render('Financeiro/Index', [
             'lancamentos' => $lancamentos,
-            'filtros' => $request->only(['busca', 'tipo', 'categoria_id', 'mes', 'ano']),
+            'filtros' => $request->only(['busca', 'tipo', 'categoria_id', 'mes', 'ano', 'unidade_id']),
             'categorias' => FinanceiroCategoria::all(),
+            'unidades' => Unidade::all(),
             'resumo' => [
                 'entradas' => (float) ($resumo->entradas ?? 0),
                 'saidas' => (float) ($resumo->saidas ?? 0),
@@ -66,6 +72,7 @@ class FinanceiroController extends Controller
         return Inertia::render('Financeiro/Create', [
             'categorias' => FinanceiroCategoria::all(),
             'doadores' => Doador::select('id', 'nome', 'tipo')->get(),
+            'unidades' => Unidade::all(),
         ]);
     }
 
@@ -79,6 +86,7 @@ class FinanceiroController extends Controller
             'valor' => 'required|numeric|min:0.01',
             'data' => 'required|date',
             'comprovante' => 'nullable|file|max:5120',
+            'unidade_id' => 'required|exists:unidades,id',
             'observacoes' => 'nullable|string',
         ]);
 
@@ -97,9 +105,10 @@ class FinanceiroController extends Controller
     public function edit(FinanceiroLancamento $financeiro)
     {
         return Inertia::render('Financeiro/Edit', [
-            'lancamento' => $financeiro->load(['categoria', 'doador']),
+            'lancamento' => $financeiro->load(['categoria', 'doador', 'unidade']),
             'categorias' => FinanceiroCategoria::all(),
             'doadores' => Doador::select('id', 'nome', 'tipo')->get(),
+            'unidades' => Unidade::all(),
         ]);
     }
 
@@ -113,6 +122,7 @@ class FinanceiroController extends Controller
             'valor' => 'required|numeric|min:0.01',
             'data' => 'required|date',
             'comprovante' => 'nullable|file|max:5120',
+            'unidade_id' => 'required|exists:unidades,id',
             'observacoes' => 'nullable|string',
         ]);
 
@@ -138,6 +148,68 @@ class FinanceiroController extends Controller
 
         return redirect()->route('financeiro.index')
             ->with('success', 'Lançamento removido com sucesso!');
+    }
+
+    public function dashboard(Request $request)
+    {
+        $mes = $request->mes ?? now()->month;
+        $ano = $request->ano ?? now()->year;
+        $unidadeId = $request->unidade_id;
+
+        $query = FinanceiroLancamento::whereMonth('data', $mes)
+            ->whereYear('data', $ano);
+
+        if ($unidadeId) {
+            $query->where('unidade_id', $unidadeId);
+        }
+
+        $resumo = (clone $query)->selectRaw("
+            SUM(CASE WHEN tipo = 'entrada' THEN valor ELSE 0 END) as entradas,
+            SUM(CASE WHEN tipo = 'saida' THEN valor ELSE 0 END) as saidas
+        ")->first();
+
+        // Evolução mensal (últimos 6 meses)
+        $evolucao = FinanceiroLancamento::selectRaw("
+            MONTH(data) as mes,
+            YEAR(data) as ano,
+            SUM(CASE WHEN tipo = 'entrada' THEN valor ELSE 0 END) as entradas,
+            SUM(CASE WHEN tipo = 'saida' THEN valor ELSE 0 END) as saidas
+        ")
+        ->where('data', '>=', now()->subMonths(5)->startOfMonth())
+        ->groupBy('ano', 'mes')
+        ->orderBy('ano')
+        ->orderBy('mes')
+        ->get();
+
+        // Saldo por unidade
+        $saldoUnidades = Unidade::with(['lancamentos' => function($q) use ($mes, $ano) {
+            $q->whereMonth('data', $mes)->whereYear('data', $ano);
+        }])->get()->map(function($unidade) {
+            $entradas = $unidade->lancamentos->where('tipo', 'entrada')->sum('valor');
+            $saidas = $unidade->lancamentos->where('tipo', 'saida')->sum('valor');
+            return [
+                'nome' => $unidade->nome,
+                'entradas' => (float) $entradas,
+                'saidas' => (float) $saidas,
+                'saldo' => (float) ($entradas - $saidas)
+            ];
+        });
+
+        return Inertia::render('Financeiro/Dashboard', [
+            'filtros' => [
+                'mes' => (int) $mes,
+                'ano' => (int) $ano,
+                'unidade_id' => $unidadeId
+            ],
+            'resumo' => [
+                'entradas' => (float) ($resumo->entradas ?? 0),
+                'saidas' => (float) ($resumo->saidas ?? 0),
+                'saldo' => (float) (($resumo->entradas ?? 0) - ($resumo->saidas ?? 0)),
+            ],
+            'evolucao' => $evolucao,
+            'saldoUnidades' => $saldoUnidades,
+            'unidades' => Unidade::all(),
+        ]);
     }
 
     // ============ DOADORES ============

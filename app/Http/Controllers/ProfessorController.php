@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Professor;
+use App\Models\Unidade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -11,7 +12,7 @@ class ProfessorController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Professor::withCount('turmas');
+        $query = Professor::with(['turmas', 'unidades'])->withCount('turmas');
 
         if ($request->filled('busca')) {
             $query->where('nome', 'like', "%{$request->busca}%");
@@ -25,17 +26,26 @@ class ProfessorController extends Controller
             $query->where('tipo_vinculo', $request->tipo_vinculo);
         }
 
+        if ($request->filled('unidade_id')) {
+            $query->whereHas('unidades', function ($q) use ($request) {
+                $q->where('unidades.id', $request->unidade_id);
+            });
+        }
+
         $professores = $query->latest()->paginate(15)->withQueryString();
 
         return Inertia::render('Professores/Index', [
             'professores' => $professores,
-            'filtros' => $request->only(['busca', 'status', 'tipo_vinculo']),
+            'filtros' => $request->only(['busca', 'status', 'tipo_vinculo', 'unidade_id']),
+            'unidades' => Unidade::all(),
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Professores/Create');
+        return Inertia::render('Professores/Create', [
+            'unidades' => Unidade::all(),
+        ]);
     }
 
     public function store(Request $request)
@@ -60,13 +70,19 @@ class ProfessorController extends Controller
             'tipo_vinculo' => 'required|in:voluntario,contratado',
             'data_inicio' => 'nullable|date',
             'status' => 'required|in:ativo,inativo',
+            'unidades' => 'required|array|min:1',
+            'unidades.*' => 'exists:unidades,id',
         ]);
 
         if ($request->hasFile('foto')) {
             $validated['foto'] = $request->file('foto')->store('professores/fotos', 'public');
         }
+        
+        $unidades = $validated['unidades'];
+        unset($validated['unidades']);
 
-        Professor::create($validated);
+        $professor = Professor::create($validated);
+        $professor->unidades()->sync($unidades);
 
         return redirect()->route('professores.index')
             ->with('success', 'Professor cadastrado com sucesso!');
@@ -74,7 +90,7 @@ class ProfessorController extends Controller
 
     public function show(Professor $professor)
     {
-        $professor->load(['turmas.curso', 'turmas.matriculas']);
+        $professor->load(['turmas.curso', 'turmas.matriculas', 'unidades']);
 
         $aulasMes = $professor->chamadas()
             ->whereMonth('data', now()->month)
@@ -90,7 +106,8 @@ class ProfessorController extends Controller
     public function edit(Professor $professor)
     {
         return Inertia::render('Professores/Edit', [
-            'professor' => $professor,
+            'professor' => $professor->load('unidades'),
+            'unidades' => Unidade::all(),
         ]);
     }
 
@@ -116,6 +133,8 @@ class ProfessorController extends Controller
             'tipo_vinculo' => 'required|in:voluntario,contratado',
             'data_inicio' => 'nullable|date',
             'status' => 'required|in:ativo,inativo',
+            'unidades' => 'required|array|min:1',
+            'unidades.*' => 'exists:unidades,id',
         ]);
 
         if ($request->hasFile('foto')) {
@@ -127,7 +146,11 @@ class ProfessorController extends Controller
             unset($validated['foto']);
         }
 
+        $unidades = $validated['unidades'];
+        unset($validated['unidades']);
+
         $professor->update($validated);
+        $professor->unidades()->sync($unidades);
 
         return redirect()->route('professores.show', $professor)
             ->with('success', 'Professor atualizado com sucesso!');

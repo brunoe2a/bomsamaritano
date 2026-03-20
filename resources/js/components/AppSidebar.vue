@@ -10,6 +10,7 @@ import {
     UserCheck,
     Users,
     ShieldCheck,
+    Building2,
 } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -41,6 +42,7 @@ const allNavItems: (NavItem & { permission?: string | 'admin_only' })[] = [
     { title: 'Professores', href: '/professores', icon: UserCheck, permission: 'professores.listar' },
     { title: 'Voluntários', href: '/voluntarios', icon: HandHeart, permission: 'voluntarios.listar' },
     { title: 'Financeiro', href: '/financeiro', icon: DollarSign, permission: 'financeiro.listar' },
+    { title: 'Unidades', href: '/unidades', icon: Building2, permission: 'unidades.listar' },
     { title: 'Usuários', href: '/usuarios', icon: ShieldCheck, permission: 'admin_only' },
 ];
 

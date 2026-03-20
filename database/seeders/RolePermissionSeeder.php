@@ -34,6 +34,8 @@ class RolePermissionSeeder extends Seeder
             'exportar.pdf', 'exportar.excel',
             // Dashboard
             'dashboard.ver',
+            // Unidades
+            'unidades.listar', 'unidades.ver', 'unidades.criar', 'unidades.editar', 'unidades.excluir',
         ];
 
         foreach ($permissions as $permission) {
@@ -53,6 +55,7 @@ class RolePermissionSeeder extends Seeder
             'chamada.registrar',
             'professores.listar', 'professores.ver', 'professores.criar', 'professores.editar',
             'voluntarios.listar', 'voluntarios.ver', 'voluntarios.criar', 'voluntarios.editar',
+            'unidades.listar', 'unidades.ver', 'unidades.criar', 'unidades.editar', 'unidades.excluir',
             'exportar.pdf', 'exportar.excel',
         ]);
 

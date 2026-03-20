@@ -64,6 +64,7 @@ export type Professor = {
     tipo_vinculo: 'voluntario' | 'contratado';
     data_inicio?: string;
     status: 'ativo' | 'inativo';
+    unidades?: Unidade[];
 };
 
 export type Turma = {
@@ -80,6 +81,8 @@ export type Turma = {
     curso?: Curso;
     professores?: Professor[];
     voluntarios?: Voluntario[];
+    unidade_id: number;
+    unidade?: Unidade;
     alunos_count?: number;
     matriculas?: Matricula[];
 };
@@ -120,6 +123,7 @@ export type Voluntario = {
     foto?: string;
     area_atuacao?: string;
     status: 'ativo' | 'inativo';
+    unidades?: Unidade[];
 };
 
 export type DashboardStats = {
@@ -155,6 +159,19 @@ export type MovimentacaoFinanceira = {
     tipo: 'entrada' | 'saida';
     data: string;
     categoria?: string;
+    unidade_id: number;
+    unidade?: Unidade;
+};
+
+export type Unidade = {
+    id: number;
+    nome: string;
+    endereco?: string;
+    telefone?: string;
+    email?: string;
+    contato_responsavel?: string;
+    created_at: string;
+    updated_at: string;
 };
 
 export type PaginatedData<T> = {

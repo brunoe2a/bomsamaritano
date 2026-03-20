@@ -48,4 +48,9 @@ class Voluntario extends Model
     {
         return $this->belongsToMany(Turma::class, 'turma_voluntario');
     }
+
+    public function unidades(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Unidade::class, 'unidade_voluntario');
+    }
 }

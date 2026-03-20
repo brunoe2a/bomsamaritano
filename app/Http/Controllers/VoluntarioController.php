@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Voluntario;
+use App\Models\Unidade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -11,7 +12,7 @@ class VoluntarioController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Voluntario::query();
+        $query = Voluntario::with('unidades');
 
         if ($request->filled('busca')) {
             $query->where('nome', 'like', "%{$request->busca}%");
@@ -25,11 +26,18 @@ class VoluntarioController extends Controller
             $query->where('area_atuacao', 'like', "%{$request->area_atuacao}%");
         }
 
+        if ($request->filled('unidade_id')) {
+            $query->whereHas('unidades', function ($q) use ($request) {
+                $q->where('unidades.id', $request->unidade_id);
+            });
+        }
+
         $voluntarios = $query->latest()->paginate(15)->withQueryString();
 
         return Inertia::render('Voluntarios/Index', [
             'voluntarios' => $voluntarios,
-            'filtros' => $request->only(['busca', 'status', 'area_atuacao']),
+            'filtros' => $request->only(['busca', 'status', 'unidade_id']),
+            'unidades' => Unidade::all(),
         ]);
     }
 
@@ -37,6 +45,7 @@ class VoluntarioController extends Controller
     {
         return Inertia::render('Voluntarios/Create', [
             'areasAtuacao' => \App\Models\AreaAtuacao::orderBy('nome')->get(),
+            'unidades' => Unidade::all(),
         ]);
     }
 
@@ -62,13 +71,19 @@ class VoluntarioController extends Controller
             'habilidades' => 'nullable|string',
             'data_inicio' => 'nullable|date',
             'status' => 'required|in:ativo,inativo',
+            'unidades' => 'required|array|min:1',
+            'unidades.*' => 'exists:unidades,id',
         ]);
 
         if ($request->hasFile('foto')) {
             $validated['foto'] = $request->file('foto')->store('voluntarios/fotos', 'public');
         }
 
-        Voluntario::create($validated);
+        $unidades = $validated['unidades'];
+        unset($validated['unidades']);
+
+        $voluntario = Voluntario::create($validated);
+        $voluntario->unidades()->sync($unidades);
 
         return redirect()->route('voluntarios.index')
             ->with('success', 'Voluntário cadastrado com sucesso!');
@@ -77,15 +92,16 @@ class VoluntarioController extends Controller
     public function show(Voluntario $voluntario)
     {
         return Inertia::render('Voluntarios/Show', [
-            'voluntario' => $voluntario,
+            'voluntario' => $voluntario->load('unidades'),
         ]);
     }
 
     public function edit(Voluntario $voluntario)
     {
         return Inertia::render('Voluntarios/Edit', [
-            'voluntario' => $voluntario,
+            'voluntario' => $voluntario->load('unidades'),
             'areasAtuacao' => \App\Models\AreaAtuacao::orderBy('nome')->get(),
+            'unidades' => Unidade::all(),
         ]);
     }
 
@@ -111,6 +127,8 @@ class VoluntarioController extends Controller
             'habilidades' => 'nullable|string',
             'data_inicio' => 'nullable|date',
             'status' => 'required|in:ativo,inativo',
+            'unidades' => 'required|array|min:1',
+            'unidades.*' => 'exists:unidades,id',
         ]);
 
         if ($request->hasFile('foto')) {
@@ -122,7 +140,11 @@ class VoluntarioController extends Controller
             unset($validated['foto']);
         }
 
+        $unidades = $validated['unidades'];
+        unset($validated['unidades']);
+
         $voluntario->update($validated);
+        $voluntario->unidades()->sync($unidades);
 
         return redirect()->route('voluntarios.show', $voluntario)
             ->with('success', 'Voluntário atualizado com sucesso!');

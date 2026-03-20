@@ -21,6 +21,7 @@ class FinanceiroLancamento extends Model
         'data',
         'comprovante',
         'user_id',
+        'unidade_id',
         'observacoes',
     ];
 
@@ -45,6 +46,11 @@ class FinanceiroLancamento extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function unidade(): BelongsTo
+    {
+        return $this->belongsTo(Unidade::class);
     }
 
     public function scopeEntradas($query)

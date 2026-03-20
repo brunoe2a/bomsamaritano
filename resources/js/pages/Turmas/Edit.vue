@@ -4,13 +4,14 @@ import { ArrowLeft } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import MultiSelect from '@/components/MultiSelect.vue';
 import InputError from '@/components/InputError.vue';
-import type { Turma, Curso, Professor, Voluntario, BreadcrumbItem } from '@/types';
+import type { Turma, Curso, Professor, Voluntario, BreadcrumbItem, Unidade } from '@/types';
 
 const props = defineProps<{
     turma: Turma;
     cursos: Curso[];
     professores: Professor[];
     voluntarios: Voluntario[];
+    unidades: Unidade[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -22,6 +23,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const form = useForm({
     nome: props.turma.nome,
     curso_id: props.turma.curso_id,
+    unidade_id: props.turma.unidade_id,
     professores_ids: props.turma.professores?.map(p => p.id) || [],
     voluntarios_ids: props.turma.voluntarios?.map(v => v.id) || [],
     horario_inicio: props.turma.horario_inicio || '14:00',
@@ -66,6 +68,13 @@ function submit() { form.put(`/turmas/${props.turma.id}`); }
                                 <option v-for="c in cursos" :key="c.id" :value="c.id">{{ c.nome }}</option>
                             </select>
                             <InputError :message="form.errors.curso_id" class="mt-1" />
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-medium">Unidade *</label>
+                            <select v-model="form.unidade_id" required class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                                <option v-for="u in unidades" :key="u.id" :value="u.id">{{ u.nome }}</option>
+                            </select>
+                            <InputError :message="form.errors.unidade_id" class="mt-1" />
                         </div>
                         <div class="sm:col-span-2">
                             <MultiSelect 

@@ -7,13 +7,14 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import Pagination from '@/components/Pagination.vue';
 import { useSwal } from '@/composables/useSwal';
-import type { Voluntario, PaginatedData, BreadcrumbItem } from '@/types';
+import type { Voluntario, PaginatedData, BreadcrumbItem, Unidade } from '@/types';
 
 const { confirmDelete: swalDelete } = useSwal();
 
 const props = defineProps<{
     voluntarios: PaginatedData<Voluntario>;
     filtros: Record<string, string>;
+    unidades: Unidade[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -23,6 +24,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const busca = ref(props.filtros.busca || '');
 const status = ref(props.filtros.status || '');
+const unidadeId = ref(props.filtros.unidade_id || '');
 
 let timeout: ReturnType<typeof setTimeout>;
 function applyFilters() {
@@ -31,10 +33,11 @@ function applyFilters() {
         router.get('/voluntarios', {
             busca: busca.value || undefined,
             status: status.value || undefined,
+            unidade_id: unidadeId.value || undefined,
         }, { preserveState: true, replace: true });
     }, 300);
 }
-watch([busca, status], applyFilters);
+watch([busca, status, unidadeId], applyFilters);
 
 function confirmDelete(v: Voluntario) {
     swalDelete(`O voluntário "${v.nome}" será removido.`, `/voluntarios/${v.id}`);
@@ -128,6 +131,10 @@ function deleteArea(id: number) {
                     <option value="ativo">Ativo</option>
                     <option value="inativo">Inativo</option>
                 </select>
+                <select v-model="unidadeId" class="h-10 rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                    <option value="">Todas as unidades</option>
+                    <option v-for="u in unidades" :key="u.id" :value="u.id">{{ u.nome }}</option>
+                </select>
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -142,6 +149,9 @@ function deleteArea(id: number) {
                             <p v-if="vol.area_atuacao" class="text-sm text-muted-foreground">{{ vol.area_atuacao }}</p>
                         </div>
                         <StatusBadge :status="vol.status" size="sm" />
+                    </div>
+                    <div v-if="vol.unidades?.length" class="mb-3 flex flex-wrap gap-1">
+                        <span v-for="u in vol.unidades" :key="u.id" class="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{{ u.nome }}</span>
                     </div>
                     <div class="flex justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                         <Link :href="`/voluntarios/${vol.id}`" class="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"><Eye class="h-4 w-4" /></Link>

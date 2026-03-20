@@ -7,13 +7,14 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import Pagination from '@/components/Pagination.vue';
 import { useSwal } from '@/composables/useSwal';
-import type { Professor, PaginatedData, BreadcrumbItem } from '@/types';
+import type { Professor, PaginatedData, BreadcrumbItem, Unidade } from '@/types';
 
 const { confirmDelete: swalDelete } = useSwal();
 
 const props = defineProps<{
     professores: PaginatedData<Professor & { turmas_count?: number }>;
     filtros: Record<string, string>;
+    unidades: Unidade[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -24,6 +25,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const busca = ref(props.filtros.busca || '');
 const status = ref(props.filtros.status || '');
 const tipoVinculo = ref(props.filtros.tipo_vinculo || '');
+const unidadeId = ref(props.filtros.unidade_id || '');
 
 let timeout: ReturnType<typeof setTimeout>;
 function applyFilters() {
@@ -33,10 +35,11 @@ function applyFilters() {
             busca: busca.value || undefined,
             status: status.value || undefined,
             tipo_vinculo: tipoVinculo.value || undefined,
+            unidade_id: unidadeId.value || undefined,
         }, { preserveState: true, replace: true });
     }, 300);
 }
-watch([busca, status, tipoVinculo], applyFilters);
+watch([busca, status, tipoVinculo, unidadeId], applyFilters);
 
 function confirmDelete(p: Professor) {
     swalDelete(`O professor "${p.nome}" será removido.`, `/professores/${p.id}`);
@@ -72,6 +75,10 @@ function confirmDelete(p: Professor) {
                     <option value="voluntario">Voluntário</option>
                     <option value="contratado">Contratado</option>
                 </select>
+                <select v-model="unidadeId" class="h-10 rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
+                    <option value="">Todas as unidades</option>
+                    <option v-for="u in unidades" :key="u.id" :value="u.id">{{ u.nome }}</option>
+                </select>
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -91,6 +98,9 @@ function confirmDelete(p: Professor) {
                     <div class="mb-3 flex items-center gap-3 text-sm text-muted-foreground">
                         <StatusBadge :status="prof.status" size="sm" />
                         <StatusBadge :status="prof.tipo_vinculo" size="sm" />
+                    </div>
+                    <div v-if="prof.unidades?.length" class="mb-3 flex flex-wrap gap-1">
+                        <span v-for="u in prof.unidades" :key="u.id" class="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{{ u.nome }}</span>
                     </div>
                     <div class="mb-3 flex gap-4 text-sm text-muted-foreground">
                         <span><PhoneIcon class="mr-1 inline-block size-4" /> {{ prof.telefone || '-' }}</span>

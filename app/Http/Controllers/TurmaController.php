@@ -8,8 +8,8 @@ use App\Models\Turma;
 use App\Models\Curso;
 use App\Models\Professor;
 use App\Models\Voluntario;
-use App\Models\Chamada;
 use App\Models\ChamadaAluno;
+use App\Models\Unidade;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +19,7 @@ class TurmaController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Turma::with(['curso', 'professores'])
+        $query = Turma::with(['curso', 'professores', 'unidade'])
             ->withCount(['matriculas as alunos_count' => fn ($q) => $q->where('status', 'ativa')]);
 
         if ($request->filled('busca')) {
@@ -38,12 +38,17 @@ class TurmaController extends Controller
             $query->where('ano_letivo', $request->ano_letivo);
         }
 
+        if ($request->filled('unidade_id')) {
+            $query->where('unidade_id', $request->unidade_id);
+        }
+
         $turmas = $query->latest()->paginate(15)->withQueryString();
 
         return Inertia::render('Turmas/Index', [
             'turmas' => $turmas,
-            'filtros' => $request->only(['busca', 'curso_id', 'status', 'ano_letivo']),
-            'cursos' => Curso::ativos()->select('id', 'nome')->get(),
+            'filtros' => $request->only(['busca', 'curso_id', 'status', 'unidade_id']),
+            'cursos' => Curso::ativos()->get(),
+            'unidades' => Unidade::all(),
         ]);
     }
 
@@ -53,6 +58,7 @@ class TurmaController extends Controller
             'cursos' => Curso::ativos()->get(),
             'professores' => Professor::ativos()->select('id', 'nome')->get(),
             'voluntarios' => Voluntario::ativos()->select('id', 'nome')->get(),
+            'unidades' => Unidade::all(),
         ]);
     }
 
@@ -72,6 +78,7 @@ class TurmaController extends Controller
             'capacidade_maxima' => 'required|integer|min:1',
             'ano_letivo' => 'required|integer|min:2020|max:2030',
             'status' => 'required|in:planejada,em_andamento,encerrada',
+            'unidade_id' => 'required|exists:unidades,id',
         ]);
 
         $turma = Turma::create($validated);
@@ -106,7 +113,7 @@ class TurmaController extends Controller
             ->get();
 
         return Inertia::render('Turmas/Show', [
-            'turma' => $turma,
+            'turma' => $turma->load('unidade'),
             'chamadas' => $chamadas,
             'alunosDisponiveis' => $alunosDisponiveis,
         ]);
@@ -114,13 +121,14 @@ class TurmaController extends Controller
 
     public function edit(Turma $turma)
     {
-        $turma->load(['professores', 'voluntarios']);
+        $turma->load(['professores', 'voluntarios', 'unidade']);
 
         return Inertia::render('Turmas/Edit', [
             'turma' => $turma,
             'cursos' => Curso::ativos()->get(),
             'professores' => Professor::ativos()->select('id', 'nome')->get(),
             'voluntarios' => Voluntario::ativos()->select('id', 'nome')->get(),
+            'unidades' => Unidade::all(),
         ]);
     }
 
@@ -140,6 +148,7 @@ class TurmaController extends Controller
             'capacidade_maxima' => 'required|integer|min:1',
             'ano_letivo' => 'required|integer|min:2020|max:2030',
             'status' => 'required|in:planejada,em_andamento,encerrada',
+            'unidade_id' => 'required|exists:unidades,id',
         ]);
 
         $turma->update($validated);

@@ -22,6 +22,7 @@ class Turma extends Model
         'capacidade_maxima',
         'ano_letivo',
         'status',
+        'unidade_id',
     ];
 
     protected function casts(): array
@@ -36,6 +37,11 @@ class Turma extends Model
     public function curso(): BelongsTo
     {
         return $this->belongsTo(Curso::class);
+    }
+
+    public function unidade(): BelongsTo
+    {
+        return $this->belongsTo(Unidade::class);
     }
 
     public function professores(): BelongsToMany

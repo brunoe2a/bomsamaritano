@@ -75,12 +75,16 @@ class DatabaseSeeder extends Seeder
             ['nome' => 'Fernanda Costa Souza', 'especialidade' => ['Informática'], 'tipo_vinculo' => 'contratado', 'email' => 'fernanda@email.com', 'telefone' => '(11) 99999-5555', 'whatsapp' => '(11) 99999-5555'],
         ];
 
-        $professores = collect($professoresData)->map(fn ($p) => Professor::create(array_merge($p, [
-            'data_nascimento' => fake('pt_BR')->dateTimeBetween('-50 years', '-25 years'),
-            'cpf' => fake('pt_BR')->unique()->numerify('###.###.###-##'),
-            'data_inicio' => fake('pt_BR')->dateTimeBetween('-3 years', '-6 months'),
-            'status' => 'ativo',
-        ])));
+        $professores = collect($professoresData)->map(function ($p) {
+            $professor = Professor::create(array_merge($p, [
+                'data_nascimento' => fake('pt_BR')->dateTimeBetween('-50 years', '-25 years'),
+                'cpf' => fake('pt_BR')->unique()->numerify('###.###.###-##'),
+                'data_inicio' => fake('pt_BR')->dateTimeBetween('-3 years', '-6 months'),
+                'status' => 'ativo',
+            ]));
+            $professor->unidades()->attach(1); // Atribuir à Sede
+            return $professor;
+        });
 
         // ============ TURMAS ============
         $turmas = collect();
@@ -88,6 +92,7 @@ class DatabaseSeeder extends Seeder
             $turma = Turma::create([
                 'nome' => "{$curso->nome} - Turma A",
                 'curso_id' => $curso->id,
+                'unidade_id' => 1, // Sede
                 'horario_inicio' => '14:00',
                 'horario_fim' => '16:00',
                 'dias_semana' => ['1', '3', '5'],
@@ -193,7 +198,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($voluntariosData as $v) {
-            Voluntario::create(array_merge($v, [
+            $voluntario = Voluntario::create(array_merge($v, [
                 'cpf' => fake('pt_BR')->unique()->numerify('###.###.###-##'),
                 'telefone' => fake('pt_BR')->phoneNumber(),
                 'whatsapp' => fake('pt_BR')->phoneNumber(),
@@ -202,6 +207,7 @@ class DatabaseSeeder extends Seeder
                 'data_inicio' => fake('pt_BR')->dateTimeBetween('-2 years', '-1 month'),
                 'status' => 'ativo',
             ]));
+            $voluntario->unidades()->attach(1); // Atribuir à Sede
         }
 
         // ============ FINANCEIRO ============
@@ -241,6 +247,7 @@ class DatabaseSeeder extends Seeder
                 FinanceiroLancamento::create([
                     'tipo' => 'entrada',
                     'categoria_id' => $catReceita->id,
+                    'unidade_id' => 1, // Sede
                     'doador_id' => fake()->boolean(60) ? $doadores->random()->id : null,
                     'descricao' => "Receita: {$catReceita->nome}",
                     'valor' => fake()->randomFloat(2, 500, 5000),
@@ -255,6 +262,7 @@ class DatabaseSeeder extends Seeder
                 FinanceiroLancamento::create([
                     'tipo' => 'saida',
                     'categoria_id' => $catDespesa->id,
+                    'unidade_id' => 1, // Sede
                     'descricao' => "Despesa: {$catDespesa->nome}",
                     'valor' => fake()->randomFloat(2, 100, 3000),
                     'data' => $mesRef->copy()->day(rand(1, 28)),

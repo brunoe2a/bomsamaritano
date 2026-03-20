@@ -2,8 +2,13 @@
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { ArrowLeft } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem } from '@/types';
-const props = defineProps<{ areasAtuacao: { id: number; nome: string }[] }>();
+import MultiSelect from '@/components/MultiSelect.vue';
+import type { BreadcrumbItem, Unidade } from '@/types';
+
+const props = defineProps<{ 
+    areasAtuacao: { id: number; nome: string }[];
+    unidades: Unidade[];
+}>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -23,6 +28,7 @@ const form = useForm({
     habilidades: '',
     data_inicio: '',
     status: 'ativo',
+    unidades: [] as number[],
 });
 
 function handleFoto(e: Event) {
@@ -93,6 +99,15 @@ function submit() { form.post('/voluntarios'); }
                         <div class="sm:col-span-2">
                             <label class="mb-1 block text-sm font-medium">Habilidades / Observações</label>
                             <textarea v-model="form.habilidades" rows="2" class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"></textarea>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <MultiSelect 
+                                v-model="form.unidades" 
+                                :options="unidades" 
+                                label="Unidades *" 
+                                placeholder="Selecione uma ou mais unidades"
+                            />
+                            <p v-if="form.errors.unidades" class="mt-1 text-xs text-red-500">{{ form.errors.unidades }}</p>
                         </div>
                     </div>
                 </div>

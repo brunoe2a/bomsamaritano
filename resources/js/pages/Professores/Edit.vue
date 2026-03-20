@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3';
-import { ArrowLeft } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { Professor, BreadcrumbItem } from '@/types';
+import MultiSelect from '@/components/MultiSelect.vue';
+import type { Professor, BreadcrumbItem, Unidade } from '@/types';
 
-const props = defineProps<{ professor: Professor }>();
+const props = defineProps<{ 
+    professor: Professor;
+    unidades: Unidade[];
+}>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -24,6 +27,7 @@ const form = useForm({
     tipo_vinculo: props.professor.tipo_vinculo,
     data_inicio: props.professor.data_inicio?.split('T')[0] || '',
     status: props.professor.status,
+    unidades: (props.professor as any).unidades?.map((u: any) => u.id) || [],
 });
 
 const especialidades = ['Português', 'Matemática', 'Inglês', 'Violão', 'Informática', 'Reforço Escolar'];
@@ -113,6 +117,15 @@ function submit() {
                                     {{ e }}
                                 </label>
                             </div>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <MultiSelect 
+                                v-model="form.unidades" 
+                                :options="unidades" 
+                                label="Unidades *" 
+                                placeholder="Selecione uma ou mais unidades"
+                            />
+                            <p v-if="form.errors.unidades" class="mt-1 text-xs text-red-500">{{ form.errors.unidades }}</p>
                         </div>
                     </div>
                 </div>
