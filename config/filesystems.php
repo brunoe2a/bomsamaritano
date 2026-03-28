@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DISK', 'public'),
+    'default' => strtolower(env('FILESYSTEM_DISK', 'public')),
 
     /*
     |--------------------------------------------------------------------------
