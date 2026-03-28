@@ -15,17 +15,17 @@ if [ -z "$APP_KEY" ]; then
     php artisan key:generate --force
 fi
 
-# Create SQLite database if using sqlite
-if [ "$DB_CONNECTION" = "sqlite" ]; then
-    if [ ! -f /var/www/html/database/database.sqlite ]; then
-        echo "📦 Criando banco SQLite..."
-        touch /var/www/html/database/database.sqlite
-        chown www-data:www-data /var/www/html/database/database.sqlite
-    fi
-fi
-
 # Run migrations
 echo "🗄️  Executando migrations..."
+# Espera opcional se o banco externo demorar a responder (timeout de 30s)
+for i in $(seq 1 30); do
+    if php artisan db:monitor > /dev/null 2>&1; then
+        break
+    fi
+    echo "⏳ Aguardando banco de dados ($i/30)..."
+    sleep 1
+done
+
 php artisan migrate --force
 
 # Seed admin user
@@ -40,7 +40,10 @@ php artisan view:cache
 php artisan event:cache
 
 # Create storage symlink
-php artisan storage:link --force 2>/dev/null || true
+echo "🔗 Verificando link de storage..."
+if [ ! -L public/storage ]; then
+    php artisan storage:link --force
+fi
 
 # Ensure correct permissions
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
