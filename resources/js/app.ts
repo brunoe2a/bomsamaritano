@@ -6,7 +6,7 @@ import '../css/app.css';
 import { initializeTheme } from '@/composables/useAppearance';
 import Swal from 'sweetalert2';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = window.document.querySelector('meta[name="app-name"]')?.getAttribute('content') || import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
