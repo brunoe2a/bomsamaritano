@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Voluntario extends Model
 {
     use HasFactory;
-    use \Illuminate\Support\Facades\Storage;
 
     protected $appends = ['foto_url'];
 

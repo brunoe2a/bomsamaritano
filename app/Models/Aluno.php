@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class Aluno extends Model
 {
     use HasFactory;
-    use \Illuminate\Support\Facades\Storage;
 
     protected $appends = ['foto_url'];
 
