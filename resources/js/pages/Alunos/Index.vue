@@ -130,7 +130,7 @@ function confirmDelete(aluno: Aluno) {
                                         <div
                                             class="flex h-9 w-9 overflow-hidden items-center justify-center rounded-full border border-primary/20 bg-primary/15 text-xs font-bold text-primary"
                                         >
-                                            <img v-if="aluno.foto" :src="`/storage/${aluno.foto}`" :alt="aluno.nome" class="h-full w-full object-cover" />
+                                            <img v-if="aluno.foto" :src="aluno.foto_url" :alt="aluno.nome" class="h-full w-full object-cover" />
                                             <span v-else>{{ aluno?.nome?.charAt(0) || '' }}</span>
                                         </div>
                                         <div>

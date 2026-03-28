@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Professor extends Model
 {
     use HasFactory;
+    use \Illuminate\Support\Facades\Storage;
+
+    protected $appends = ['foto_url'];
 
     protected $table = 'professores';
 

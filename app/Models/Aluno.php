@@ -11,6 +11,9 @@ use Carbon\Carbon;
 class Aluno extends Model
 {
     use HasFactory;
+    use \Illuminate\Support\Facades\Storage;
+
+    protected $appends = ['foto_url'];
 
     protected $fillable = [
         'nome',
@@ -74,5 +77,10 @@ class Aluno extends Model
             $inicio->format('m-d'),
             $fim->format('m-d'),
         ]);
+    }
+
+    public function getFotoUrlAttribute(): ?string
+    {
+        return $this->foto ? Storage::url($this->foto) : null;
     }
 }

@@ -45,7 +45,7 @@ function calcIdade(dataNasc: string): number {
                     </Link>
 
                     <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary/20 bg-primary/10 text-xl font-bold text-primary">
-                        <img v-if="aluno.foto" :src="`/storage/${aluno.foto}`" :alt="aluno.nome" class="h-full w-full object-cover" />
+                        <img v-if="aluno.foto" :src="aluno.foto_url" :alt="aluno.nome" class="h-full w-full object-cover" />
                         <span v-else>{{ aluno?.nome?.charAt(0) || '' }}</span>
                     </div>
 

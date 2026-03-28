@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class FinanceiroLancamento extends Model
 {
     use HasFactory;
+    use \Illuminate\Support\Facades\Storage;
+
+    protected $appends = ['comprovante_url'];
 
     protected $table = 'financeiro_lancamentos';
 
@@ -35,7 +38,12 @@ class FinanceiroLancamento extends Model
 
     public function categoria(): BelongsTo
     {
-        return $this->belongsTo(FinanceiroCategoria::class, 'categoria_id');
+        return $this->belongsTo(FinanceiroCategoria::class, 'financeiro_categoria_id');
+    }
+
+    public function getComprovanteUrlAttribute(): ?string
+    {
+        return $this->comprovante ? Storage::url($this->comprovante) : null;
     }
 
     public function doador(): BelongsTo

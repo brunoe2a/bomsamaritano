@@ -94,7 +94,7 @@ class FinanceiroController extends Controller
         $validated['user_id'] = auth()->id();
 
         if ($request->hasFile('comprovante')) {
-            $validated['comprovante'] = $request->file('comprovante')->store('financeiro/comprovantes', 'public');
+            $validated['comprovante'] = $request->file('comprovante')->store('financeiro/comprovantes');
         }
 
         FinanceiroLancamento::create($validated);
@@ -138,9 +138,9 @@ class FinanceiroController extends Controller
 
         if ($request->hasFile('comprovante')) {
             if ($financeiro->comprovante) {
-                Storage::disk('public')->delete($financeiro->comprovante);
+                Storage::delete($financeiro->comprovante);
             }
-            $validated['comprovante'] = $request->file('comprovante')->store('financeiro/comprovantes', 'public');
+            $validated['comprovante'] = $request->file('comprovante')->store('financeiro/comprovantes');
         }
 
         $financeiro->update($validated);
@@ -152,7 +152,7 @@ class FinanceiroController extends Controller
     public function destroy(FinanceiroLancamento $financeiro)
     {
         if ($financeiro->comprovante) {
-            Storage::disk('public')->delete($financeiro->comprovante);
+            Storage::delete($financeiro->comprovante);
         }
         $financeiro->delete();
 

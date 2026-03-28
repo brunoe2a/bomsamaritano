@@ -77,7 +77,7 @@ class ProfessorController extends Controller
         ]);
 
         if ($request->hasFile('foto')) {
-            $validated['foto'] = $request->file('foto')->store('professores/fotos', 'public');
+            $validated['foto'] = $request->file('foto')->store('professores/fotos');
         }
         
         $unidades = $validated['unidades'];
@@ -146,9 +146,9 @@ class ProfessorController extends Controller
 
         if ($request->hasFile('foto')) {
             if ($professor->foto) {
-                Storage::disk('public')->delete($professor->foto);
+                Storage::delete($professor->foto);
             }
-            $validated['foto'] = $request->file('foto')->store('professores/fotos', 'public');
+            $validated['foto'] = $request->file('foto')->store('professores/fotos');
         } else {
             unset($validated['foto']);
         }
@@ -170,7 +170,7 @@ class ProfessorController extends Controller
     public function destroy(Professor $professor)
     {
         if ($professor->foto) {
-            Storage::disk('public')->delete($professor->foto);
+            Storage::delete($professor->foto);
         }
         $professor->delete();
 

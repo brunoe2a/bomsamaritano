@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Voluntario extends Model
 {
     use HasFactory;
+    use \Illuminate\Support\Facades\Storage;
+
+    protected $appends = ['foto_url'];
 
     protected $fillable = [
         'nome',
@@ -57,5 +60,10 @@ class Voluntario extends Model
     public function habilidades(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Habilidade::class, 'habilidade_voluntario');
+    }
+
+    public function getFotoUrlAttribute(): ?string
+    {
+        return $this->foto ? Storage::url($this->foto) : null;
     }
 }

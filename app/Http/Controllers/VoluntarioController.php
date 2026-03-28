@@ -78,7 +78,7 @@ class VoluntarioController extends Controller
         ]);
 
         if ($request->hasFile('foto')) {
-            $validated['foto'] = $request->file('foto')->store('voluntarios/fotos', 'public');
+            $validated['foto'] = $request->file('foto')->store('voluntarios/fotos');
         }
 
         $unidades = $validated['unidades'];
@@ -141,9 +141,9 @@ class VoluntarioController extends Controller
 
         if ($request->hasFile('foto')) {
             if ($voluntario->foto) {
-                Storage::disk('public')->delete($voluntario->foto);
+                Storage::delete($voluntario->foto);
             }
-            $validated['foto'] = $request->file('foto')->store('voluntarios/fotos', 'public');
+            $validated['foto'] = $request->file('foto')->store('voluntarios/fotos');
         } else {
             unset($validated['foto']);
         }
@@ -166,7 +166,7 @@ class VoluntarioController extends Controller
     public function destroy(Voluntario $voluntario)
     {
         if ($voluntario->foto) {
-            Storage::disk('public')->delete($voluntario->foto);
+            Storage::delete($voluntario->foto);
         }
         $voluntario->delete();
 

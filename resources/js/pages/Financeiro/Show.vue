@@ -131,10 +131,10 @@ const isImage = (path: string) => {
                                 <FileText class="h-5 w-5 text-primary" /> Comprovante de Pagamento
                             </h3>
                             <div v-if="lancamento.comprovante" class="flex gap-2">
-                                <a :href="`/storage/${lancamento.comprovante}`" target="_blank" class="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors" title="Abrir original">
+                                <a :href="lancamento.comprovante_url" target="_blank" class="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors" title="Abrir original">
                                     <ExternalLink class="h-5 w-5" />
                                 </a>
-                                <a :href="`/storage/${lancamento.comprovante}`" download class="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors" title="Download">
+                                <a :href="lancamento.comprovante_url" download class="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors" title="Download">
                                     <Download class="h-5 w-5" />
                                 </a>
                             </div>
@@ -143,7 +143,7 @@ const isImage = (path: string) => {
                         <div v-if="lancamento.comprovante" class="rounded-xl border border-border bg-muted/10 overflow-hidden">
                             <template v-if="isImage(lancamento.comprovante)">
                                 <div class="p-2">
-                                    <img :src="`/storage/${lancamento.comprovante}`" alt="Comprovante" class="w-full h-auto max-h-[600px] object-contain mx-auto rounded-lg shadow-sm" />
+                                    <img :src="lancamento.comprovante_url" alt="Comprovante" class="w-full h-auto max-h-[600px] object-contain mx-auto rounded-lg shadow-sm" />
                                 </div>
                             </template>
                             <template v-else>
@@ -153,7 +153,7 @@ const isImage = (path: string) => {
                                     </div>
                                     <p class="text-lg font-bold text-foreground mb-2">Documento Digital</p>
                                     <p class="text-sm text-muted-foreground mb-8 max-w-sm mx-auto">Este comprovante está em formato PDF ou outro tipo de documento que não pode ser exibido diretamente aqui.</p>
-                                    <a :href="`/storage/${lancamento.comprovante}`" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all hover:scale-105 active:scale-95">
+                                    <a :href="lancamento.comprovante_url" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all hover:scale-105 active:scale-95">
                                         <ExternalLink class="h-4 w-4" /> Visualizar Documento Completo
                                     </a>
                                 </div>

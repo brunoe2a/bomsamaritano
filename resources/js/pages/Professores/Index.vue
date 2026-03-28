@@ -85,7 +85,7 @@ function confirmDelete(p: Professor) {
                 <div v-for="prof in professores.data" :key="prof.id" class="group rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md">
                     <div class="mb-3 flex items-start gap-3">
                         <div class="flex h-12 w-12 shrink-0 overflow-hidden items-center justify-center rounded-full border border-primary/20 bg-primary/15 text-lg font-bold text-primary">
-                            <img v-if="prof.foto" :src="`/storage/${prof.foto}`" :alt="prof.nome" class="h-full w-full object-cover" />
+                            <img v-if="prof.foto" :src="prof.foto_url" :alt="prof.nome" class="h-full w-full object-cover" />
                             <span v-else>{{ prof?.nome?.charAt(0) || '' }}</span>
                         </div>
                         <div class="min-w-0 flex-1">

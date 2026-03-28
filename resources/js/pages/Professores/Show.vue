@@ -27,7 +27,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <Link href="/professores" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border hover:bg-muted"><ArrowLeft class="h-4 w-4" /></Link>
                     
                     <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-primary/20 bg-primary/10 text-xl font-bold text-primary">
-                        <img v-if="professor.foto" :src="`/storage/${professor.foto}`" :alt="professor.nome" class="h-full w-full object-cover" />
+                        <img v-if="professor.foto" :src="professor.foto_url" :alt="professor.nome" class="h-full w-full object-cover" />
                         <span v-else>{{ professor?.nome?.charAt(0) || '' }}</span>
                     </div>
 

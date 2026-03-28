@@ -33,6 +33,7 @@ export type Aluno = {
     idade?: number;
     ano_escolar?: string;
     foto?: string;
+    foto_url?: string;
     responsavel_id: number;
     status: 'ativo' | 'inativo' | 'trancado' | 'concluido';
     observacoes?: string;
@@ -59,6 +60,7 @@ export type Professor = {
     id: number;
     nome: string;
     foto?: string;
+    foto_url?: string;
     cpf?: string;
     rg?: string;
     data_nascimento?: string;
@@ -127,6 +129,7 @@ export type Voluntario = {
     id: number;
     nome: string;
     foto?: string;
+    foto_url?: string;
     cpf?: string;
     rg?: string;
     data_nascimento?: string;
@@ -177,6 +180,7 @@ export type Aniversariante = {
     data_nascimento: string;
     idade: number;
     foto?: string;
+    foto_url?: string;
 };
 
 export type FinanceiroCategoria = {
@@ -197,6 +201,7 @@ export type FinanceiroLancamento = {
     valor: number;
     data: string;
     comprovante?: string;
+    comprovante_url?: string;
     user_id: number;
     usuario?: { name: string };
     unidade_id: number;

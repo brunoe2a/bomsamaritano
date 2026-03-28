@@ -96,7 +96,7 @@ function submit() {
                             <label class="mb-1 block text-sm font-medium">Foto</label>
                             <div class="flex items-center gap-3">
                                 <div class="flex h-12 w-12 shrink-0 overflow-hidden items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-xs font-bold text-primary">
-                                    <img v-if="voluntario.foto" :src="`/storage/${voluntario.foto}`" alt="Foto Atual" class="h-full w-full object-cover" />
+                                    <img v-if="voluntario.foto" :src="voluntario.foto_url" alt="Foto Atual" class="h-full w-full object-cover" />
                                     <span v-else>{{ voluntario?.nome?.charAt(0) || '' }}</span>
                                 </div>
                                 <input type="file" accept="image/*" @change="handleFoto" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm file:mr-2 file:rounded file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-xs file:text-primary" />

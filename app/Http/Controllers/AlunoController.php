@@ -69,7 +69,7 @@ class AlunoController extends Controller
             $alunoData['responsavel_id'] = $responsavel->id;
 
             if ($request->hasFile('foto')) {
-                $alunoData['foto'] = $request->file('foto')->store('alunos/fotos', 'public');
+                $alunoData['foto'] = $request->file('foto')->store('alunos/fotos');
             }
 
             $aluno = Aluno::create($alunoData);
@@ -143,9 +143,9 @@ class AlunoController extends Controller
 
             if ($request->hasFile('foto')) {
                 if ($aluno->foto) {
-                    Storage::disk('public')->delete($aluno->foto);
+                    Storage::delete($aluno->foto);
                 }
-                $alunoData['foto'] = $request->file('foto')->store('alunos/fotos', 'public');
+                $alunoData['foto'] = $request->file('foto')->store('alunos/fotos');
             }
 
             $aluno->update($alunoData);
@@ -158,7 +158,7 @@ class AlunoController extends Controller
     public function destroy(Aluno $aluno)
     {
         if ($aluno->foto) {
-            Storage::disk('public')->delete($aluno->foto);
+            Storage::delete($aluno->foto);
         }
 
         $aluno->delete();
