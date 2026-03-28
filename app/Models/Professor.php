@@ -77,4 +77,9 @@ class Professor extends Model
     {
         return $query->where('status', 'ativo');
     }
+
+    public function getFotoUrlAttribute(): ?string
+    {
+        return $this->foto ? Storage::url($this->foto) : null;
+    }
 }
