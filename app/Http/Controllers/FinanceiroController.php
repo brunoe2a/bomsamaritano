@@ -235,6 +235,7 @@ class FinanceiroController extends Controller
                 'labels' => $evolucao->map(fn($e) => date('M/Y', mktime(0, 0, 0, $e->mes, 1, $e->ano)))->toArray(),
                 'entradas' => $evolucao->pluck('entradas')->map(fn($v) => (float)$v)->toArray(),
                 'saidas' => $evolucao->pluck('saidas')->map(fn($v) => (float)$v)->toArray(),
+                'saldos' => $evolucao->map(fn($e) => (float)($e->entradas - $e->saidas))->toArray(),
             ],
             'balanco_unidades' => $saldoUnidades->map(fn($s) => [
                 'unidade' => $s['nome'],

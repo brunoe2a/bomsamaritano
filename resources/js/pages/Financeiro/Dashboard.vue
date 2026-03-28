@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, Link } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import { 
     TrendingUp, 
     TrendingDown, 
@@ -11,7 +11,9 @@ import {
     Building2
 } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
-import VueApexCharts from 'vue3-apexcharts';
+import KPICard from '@/components/Financeiro/KPICard.vue';
+import BaseChart from '@/components/Financeiro/BaseChart.vue';
+import UnitPerformanceChart from '@/components/Financeiro/UnitPerformanceChart.vue';
 import type { BreadcrumbItem, Unidade } from '@/types';
 
 const props = defineProps<{
@@ -24,6 +26,7 @@ const props = defineProps<{
         labels: string[];
         entradas: number[];
         saidas: number[];
+        saldos: number[];
     };
     receitas_categoria: {
         labels: string[];
@@ -67,33 +70,18 @@ function applyFilters() {
     }, { preserveState: true, replace: true });
 }
 
-function formatCurrency(v: number) {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
-}
+const evolutionSeries = [
+    { name: 'Entradas', data: props.grafico_evolucao.entradas },
+    { name: 'Saídas', data: props.grafico_evolucao.saidas },
+    { name: 'Saldo Mensal', data: props.grafico_evolucao.saldos, type: 'line' }
+];
 
-const chartOptions = {
-    chart: {
-        type: 'area' as const,
-        toolbar: { show: false },
-        zoom: { enabled: false }
-    },
-    colors: ['#10b981', '#ef4444'],
-    dataLabels: { enabled: false },
-    stroke: { curve: 'smooth' as const, width: 2 },
+const evolutionOptions = {
+    colors: ['#10b981', '#ef4444', '#3b82f6'],
     xaxis: {
         categories: props.grafico_evolucao.labels,
         labels: { style: { colors: '#94a3b8' } }
     },
-    yaxis: {
-        labels: { 
-            formatter: (v: number) => formatCurrency(v),
-            style: { colors: '#94a3b8' } 
-        }
-    },
-    tooltip: {
-        y: { formatter: (v: number) => formatCurrency(v) }
-    },
-    grid: { borderColor: '#f1f5f9' },
     fill: {
         type: 'gradient',
         gradient: {
@@ -105,17 +93,10 @@ const chartOptions = {
     }
 };
 
-const series = [
-    { name: 'Entradas', data: props.grafico_evolucao.entradas },
-    { name: 'Saídas', data: props.grafico_evolucao.saidas }
-];
-
 const pieOptions = (title: string, colors: string[]) => ({
     chart: { type: 'donut' as const },
     labels: [] as string[],
     colors: colors,
-    legend: { position: 'bottom' as const, horizontalAlign: 'center' as const },
-    dataLabels: { enabled: true, formatter: (val: number) => val.toFixed(1) + '%' },
     plotOptions: {
         pie: {
             donut: {
@@ -127,14 +108,13 @@ const pieOptions = (title: string, colors: string[]) => ({
                         label: title,
                         formatter: (w: any) => {
                             const total = w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0);
-                            return formatCurrency(total);
+                            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(total);
                         }
                     }
                 }
             }
         }
-    },
-    tooltip: { y: { formatter: (v: number) => formatCurrency(v) } }
+    }
 });
 
 const receitasPieOptions = { ...pieOptions('Receitas', ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0']), labels: props.receitas_categoria.labels };
@@ -148,118 +128,88 @@ const despesasPieOptions = { ...pieOptions('Despesas', ['#ef4444', '#f87171', '#
             <!-- Header -->
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <div class="flex items-center gap-2">
-                        <Link href="/financeiro" class="text-muted-foreground hover:text-foreground">
+                    <div class="flex items-center gap-3">
+                        <Link href="/financeiro" class="flex h-9 w-9 items-center justify-center rounded-lg border border-border hover:bg-muted">
                             <ArrowLeft class="h-5 w-5" />
                         </Link>
                         <h1 class="text-2xl font-bold text-foreground">Dashboard Financeiro</h1>
                     </div>
-                    <p class="text-sm text-muted-foreground">Análise de fluxos e saldos por unidade</p>
                 </div>
             </div>
 
-            <!-- Filters -->
-            <div class="grid gap-4 rounded-xl border border-border bg-card p-4 sm:grid-cols-4">
+            <!-- Dashboard Filter Bar -->
+            <div class="grid gap-4 rounded-xl border border-border bg-card p-4 sm:grid-cols-4 shadow-sm">
                 <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-muted-foreground">Unidade</label>
+                    <label class="text-xs font-bold text-muted-foreground uppercase">Unidade</label>
                     <div class="relative">
                         <Building2 class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <select v-model="unidade_id" class="h-10 w-full rounded-lg border border-input bg-background pl-10 pr-3 text-sm outline-none focus:border-primary">
+                        <select v-model="unidade_id" class="h-10 w-full rounded-lg border border-input bg-background pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary/20">
                             <option value="">Todas as Unidades</option>
                             <option v-for="u in unidades" :key="u.id" :value="u.id">{{ u.nome }}</option>
                         </select>
                     </div>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-muted-foreground">De</label>
+                    <label class="text-xs font-bold text-muted-foreground uppercase">De</label>
                     <div class="relative">
                         <Calendar class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <input v-model="periodo_de" type="date" class="h-10 w-full rounded-lg border border-input bg-background pl-10 pr-3 text-sm outline-none focus:border-primary" />
+                        <input v-model="periodo_de" type="date" class="h-10 w-full rounded-lg border border-input bg-background pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary/20" />
                     </div>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <label class="text-xs font-medium text-muted-foreground">Até</label>
+                    <label class="text-xs font-bold text-muted-foreground uppercase">Até</label>
                     <div class="relative">
                         <Calendar class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <input v-model="periodo_ate" type="date" class="h-10 w-full rounded-lg border border-input bg-background pl-10 pr-3 text-sm outline-none focus:border-primary" />
+                        <input v-model="periodo_ate" type="date" class="h-10 w-full rounded-lg border border-input bg-background pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary/20" />
                     </div>
                 </div>
                 <div class="flex items-end">
-                    <button @click="applyFilters" class="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                        <Filter class="h-4 w-4" /> Filtrar Resultados
+                    <button @click="applyFilters" class="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-lg">
+                        <Filter class="h-4 w-4" /> Atualizar Dashboard
                     </button>
                 </div>
             </div>
 
-            <!-- KPIs -->
-            <div class="grid gap-4 sm:grid-cols-3">
-                <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total de Entradas</p>
-                            <h3 class="mt-1 text-3xl font-bold text-emerald-600">{{ formatCurrency(kpis.total_entradas) }}</h3>
-                        </div>
-                        <div class="rounded-full bg-emerald-100 p-3 text-emerald-600 dark:bg-emerald-900/30">
-                            <TrendingUp class="h-6 w-6" />
-                        </div>
-                    </div>
-                </div>
-                <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total de Saídas</p>
-                            <h3 class="mt-1 text-3xl font-bold text-red-600">{{ formatCurrency(kpis.total_saidas) }}</h3>
-                        </div>
-                        <div class="rounded-full bg-red-100 p-3 text-red-600 dark:bg-red-900/30">
-                            <TrendingDown class="h-6 w-6" />
-                        </div>
-                    </div>
-                </div>
-                <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-muted-foreground uppercase tracking-wider">Saldo Total</p>
-                            <h3 class="mt-1 text-3xl font-bold" :class="kpis.saldo_total >= 0 ? 'text-blue-600' : 'text-red-600'">
-                                {{ formatCurrency(kpis.saldo_total) }}
-                            </h3>
-                        </div>
-                        <div class="rounded-full p-3" :class="kpis.saldo_total >= 0 ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-red-100 text-red-600 dark:bg-red-900/30'">
-                            <DollarSign class="h-6 w-6" />
-                        </div>
-                    </div>
-                </div>
+            <!-- Strategic KPIs -->
+            <div class="grid gap-6 sm:grid-cols-3">
+                <KPICard title="Receitas Totais" :value="kpis.total_entradas" :icon="TrendingUp" variant="emerald" />
+                <KPICard title="Despesas Totais" :value="kpis.total_saidas" :icon="TrendingDown" variant="red" />
+                <KPICard title="Saldo Líquido" :value="kpis.saldo_total" :icon="DollarSign" :variant="kpis.saldo_total >= 0 ? 'blue' : 'red'" />
             </div>
 
+            <!-- Main Charts Row -->
             <div class="grid gap-6">
-                <!-- Evolution Chart -->
+                <!-- Evolution Full Width -->
                 <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-                    <h3 class="mb-6 text-lg font-bold text-foreground">Evolução Mensal</h3>
-                    <div class="h-[300px]">
-                        <VueApexCharts type="area" height="300" :options="chartOptions" :series="series" />
+                    <BaseChart 
+                        type="area" 
+                        title="Evolução Financeira Mensal" 
+                        :series="evolutionSeries" 
+                        :options="evolutionOptions" 
+                        :height="350" 
+                    />
+                </div>
+
+                <!-- Secondary Charts Grid -->
+                <div class="grid gap-6 lg:grid-cols-2">
+                    <UnitPerformanceChart :data="balanco_unidades" />
+                    
+                    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+                        <h3 class="mb-6 text-sm font-semibold text-foreground uppercase tracking-wider">Composição por Categoria</h3>
+                        <div class="space-y-8">
+                            <div v-if="receitas_categoria.series.length > 0">
+                                <BaseChart type="donut" title="Receitas" :series="receitas_categoria.series" :options="receitasPieOptions" :height="250" />
+                            </div>
+                            <div v-if="despesas_categoria.series.length > 0">
+                                <BaseChart type="donut" title="Despesas" :series="despesas_categoria.series" :options="despesasPieOptions" :height="250" />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Category Pie Charts -->
-                <div class="grid gap-6 sm:grid-cols-2">
-                    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-                        <h3 class="mb-6 text-lg font-bold text-foreground">Receitas por Categoria</h3>
-                        <div v-if="receitas_categoria.series.length > 0">
-                            <VueApexCharts type="donut" height="300" :options="receitasPieOptions" :series="receitas_categoria.series" />
-                        </div>
-                        <div v-else class="flex h-[300px] items-center justify-center text-muted-foreground italic">Sem receitas no período.</div>
-                    </div>
-                    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-                        <h3 class="mb-6 text-lg font-bold text-foreground">Despesas por Categoria</h3>
-                        <div v-if="despesas_categoria.series.length > 0">
-                            <VueApexCharts type="donut" height="300" :options="despesasPieOptions" :series="despesas_categoria.series" />
-                        </div>
-                        <div v-else class="flex h-[300px] items-center justify-center text-muted-foreground italic">Sem despesas no período.</div>
-                    </div>
-                </div>
-
-                <!-- Units Balance -->
+                <!-- Units Details Table -->
                 <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-                    <h3 class="mb-6 text-lg font-bold text-foreground">Balanço por Unidade</h3>
+                    <h3 class="mb-6 text-sm font-semibold text-foreground uppercase tracking-wider">Tabela de Balanço por Unidade</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
@@ -273,14 +223,11 @@ const despesasPieOptions = { ...pieOptions('Despesas', ['#ef4444', '#f87171', '#
                             <tbody class="divide-y divide-border">
                                 <tr v-for="item in balanco_unidades" :key="item.unidade" class="hover:bg-muted/50 transition-colors">
                                     <td class="py-3 pr-4 font-medium">{{ item.unidade }}</td>
-                                    <td class="py-3 pr-4 text-emerald-600">{{ formatCurrency(item.entradas) }}</td>
-                                    <td class="py-3 pr-4 text-red-600">{{ formatCurrency(item.saidas) }}</td>
+                                    <td class="py-3 pr-4 text-emerald-600">{{ new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.entradas) }}</td>
+                                    <td class="py-3 pr-4 text-red-600">{{ new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.saidas) }}</td>
                                     <td class="py-3 text-right font-bold" :class="item.saldo >= 0 ? 'text-foreground' : 'text-red-600'">
-                                        {{ formatCurrency(item.saldo) }}
+                                        {{ new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.saldo) }}
                                     </td>
-                                </tr>
-                                <tr v-if="balanco_unidades.length === 0">
-                                    <td colspan="4" class="py-8 text-center text-muted-foreground">Sem dados para exibir.</td>
                                 </tr>
                             </tbody>
                         </table>
