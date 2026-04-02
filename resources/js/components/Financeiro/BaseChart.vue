@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import VueApexCharts from 'vue3-apexcharts';
 
 interface Props {
@@ -12,6 +13,17 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     height: 350,
     options: () => ({})
+});
+
+const chartRef = ref<any>(null);
+
+const dataURI = async () => {
+    if (!chartRef.value) return null;
+    return await chartRef.value.dataURI();
+};
+
+defineExpose({
+    dataURI
 });
 
 const formatCurrency = (v: any) => {
@@ -68,11 +80,12 @@ const chartOptions = {
         <div v-if="title" class="mb-4 flex items-center justify-between">
             <h3 class="text-sm font-semibold text-foreground uppercase tracking-wider">{{ title }}</h3>
         </div>
-        <VueApexCharts 
-            :type="type" 
-            :height="height" 
-            :options="chartOptions" 
-            :series="series" 
-        />
+    <VueApexCharts 
+        ref="chartRef"
+        :type="type" 
+        :height="height" 
+        :options="chartOptions" 
+        :series="series" 
+    />
     </div>
 </template>

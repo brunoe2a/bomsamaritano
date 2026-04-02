@@ -38,7 +38,7 @@ class FinanceiroLancamento extends Model
 
     public function categoria(): BelongsTo
     {
-        return $this->belongsTo(FinanceiroCategoria::class, 'financeiro_categoria_id');
+        return $this->belongsTo(FinanceiroCategoria::class, 'categoria_id');
     }
 
     public function getComprovanteUrlAttribute(): ?string

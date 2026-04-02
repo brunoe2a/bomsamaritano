@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BaseChart from './BaseChart.vue';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 interface Props {
     data: {
@@ -34,11 +34,15 @@ const options = computed(() => ({
     },
     legend: { position: 'top' as const }
 }));
+const chartRef = ref<any>(null);
+const dataURI = async () => await chartRef.value?.dataURI();
+defineExpose({ dataURI });
 </script>
 
 <template>
     <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
         <BaseChart 
+            ref="chartRef"
             type="bar" 
             title="Performance por Unidade" 
             :series="series" 
