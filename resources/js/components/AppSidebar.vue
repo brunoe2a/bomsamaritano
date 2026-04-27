@@ -7,6 +7,7 @@ import {
     HandHeart,
     HeartPulse,
     LayoutGrid,
+    MessageCircle,
     School,
     UserCheck,
     Users,
@@ -47,6 +48,7 @@ const allNavItems: (NavItem & { permission?: string | 'admin_only' })[] = [
     { title: 'Núcleo de Saúde', href: '/saude', icon: HeartPulse, permission: 'saude.listar' },
     { title: 'Financeiro', href: '/financeiro', icon: DollarSign, permission: 'financeiro.listar' },
     { title: 'Unidades', href: '/unidades', icon: Building2, permission: 'unidades.listar' },
+    { title: 'WhatsApp', href: '/whatsapp/notificacoes', icon: MessageCircle, permission: 'whatsapp.listar' },
     { title: 'Usuários', href: '/usuarios', icon: ShieldCheck, permission: 'admin_only' },
 ];
 

@@ -17,6 +17,9 @@ use App\Http\Controllers\VoluntarioController;
 use App\Http\Controllers\AreaAtuacaoController;
 use App\Http\Controllers\FinanceiroCategoriaController;
 use App\Http\Controllers\UnidadeController;
+use App\Http\Controllers\Whatsapp\WhatsappInstanceController;
+use App\Http\Controllers\Whatsapp\WhatsappNotificationController;
+use App\Http\Controllers\Whatsapp\WhatsappTemplateController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -105,6 +108,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('atendimentos', SaudeAtendimentoController::class)
             ->only(['index', 'store', 'update', 'destroy'])
             ->parameters(['atendimentos' => 'atendimento']);
+    });
+
+    // WhatsApp (Evolution API)
+    Route::middleware('permission:whatsapp.listar')->prefix('whatsapp')->name('whatsapp.')->group(function () {
+        // Instâncias
+        Route::get('instancias', [WhatsappInstanceController::class, 'index'])->name('instancias.index');
+        Route::post('instancias', [WhatsappInstanceController::class, 'store'])->middleware('permission:whatsapp.criar')->name('instancias.store');
+        Route::get('instancias/{instancia}/qrcode', [WhatsappInstanceController::class, 'qrCode'])->name('instancias.qrcode');
+        Route::get('instancias/{instancia}/status', [WhatsappInstanceController::class, 'status'])->name('instancias.status');
+        Route::post('instancias/{instancia}/desconectar', [WhatsappInstanceController::class, 'disconnect'])->middleware('permission:whatsapp.editar')->name('instancias.disconnect');
+        Route::delete('instancias/{instancia}', [WhatsappInstanceController::class, 'destroy'])->middleware('permission:whatsapp.excluir')->name('instancias.destroy');
+
+        // Templates de mensagem
+        Route::get('templates', [WhatsappTemplateController::class, 'index'])->name('templates.index');
+        Route::post('templates', [WhatsappTemplateController::class, 'store'])->middleware('permission:whatsapp.criar')->name('templates.store');
+        Route::put('templates/{template}', [WhatsappTemplateController::class, 'update'])->middleware('permission:whatsapp.editar')->name('templates.update');
+        Route::delete('templates/{template}', [WhatsappTemplateController::class, 'destroy'])->middleware('permission:whatsapp.excluir')->name('templates.destroy');
+
+        // Notificações (envio em massa + monitoramento)
+        Route::get('notificacoes', [WhatsappNotificationController::class, 'index'])->name('notificacoes.index');
+        Route::post('notificacoes/dispatch', [WhatsappNotificationController::class, 'dispatch'])->middleware('permission:whatsapp.enviar')->name('notificacoes.dispatch');
+        Route::post('notificacoes/{notificacao}/reenviar', [WhatsappNotificationController::class, 'reenviar'])->middleware('permission:whatsapp.enviar')->name('notificacoes.reenviar');
+        Route::delete('notificacoes/{notificacao}', [WhatsappNotificationController::class, 'destroy'])->middleware('permission:whatsapp.excluir')->name('notificacoes.destroy');
+        Route::get('alunos-search', [WhatsappNotificationController::class, 'alunos'])->name('alunos.search');
     });
 
     // Usuários (Somente Admins)

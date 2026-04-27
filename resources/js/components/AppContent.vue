@@ -18,7 +18,7 @@ const className = computed(() => props.class);
     <SidebarInset v-if="props.variant === 'sidebar'" :class="[className, 'flex flex-col']">
         <slot />
         <footer class="mt-auto py-6 pr-6 text-right text-xs text-muted-foreground border-t border-border/50 bg-card/5">
-            © 2026 - {{ new Date().getFullYear() }} Desenvolvido por E2A Soluções Digitais - Versão 1.0.2
+            © 2026 - {{ new Date().getFullYear() }} Desenvolvido por E2A Soluções Digitais - Versão 1.0.3
         </footer>
     </SidebarInset>
     <main
@@ -30,7 +30,7 @@ const className = computed(() => props.class);
             <slot />
         </div>
         <footer class="mt-auto py-6 pr-6 text-right text-xs text-muted-foreground border-t border-border/50 bg-card/5">
-            © 2026 - {{ new Date().getFullYear() }} Desenvolvido por E2A Soluções Digitais - Versão 1.0.2
+            © 2026 - {{ new Date().getFullYear() }} Desenvolvido por E2A Soluções Digitais - Versão 1.0.3
         </footer>
     </main>
 </template>

@@ -16,7 +16,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(\App\Services\EvolutionApiService::class, function () {
+            return new \App\Services\EvolutionApiService(
+                baseUrl: (string) config('services.evolution.url'),
+                apiKey: (string) config('services.evolution.key'),
+            );
+        });
     }
 
     /**
