@@ -17,7 +17,7 @@ class SaudeConvocacaoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = SaudeConvocacao::with('programa')
+        $query = SaudeConvocacao::with('programa.area')
             ->withCount(['alunos', 'atendimentos']);
 
         if ($request->filled('busca')) {
@@ -33,14 +33,14 @@ class SaudeConvocacaoController extends Controller
         return Inertia::render('Saude/Convocacoes/Index', [
             'convocacoes' => $query->latest('data')->paginate(15)->withQueryString(),
             'filtros' => $request->only(['busca', 'programa_id', 'status']),
-            'programas' => SaudePrograma::ativos()->select('id', 'nome', 'area')->orderBy('nome')->get(),
+            'programas' => SaudePrograma::ativos()->with('area:id,nome')->select('id', 'nome', 'area_id')->orderBy('nome')->get(),
         ]);
     }
 
     public function create()
     {
         return Inertia::render('Saude/Convocacoes/Create', [
-            'programas' => SaudePrograma::ativos()->select('id', 'nome', 'area')->orderBy('nome')->get(),
+            'programas' => SaudePrograma::ativos()->with('area:id,nome')->select('id', 'nome', 'area_id')->orderBy('nome')->get(),
             'unidades' => Unidade::select('id', 'nome')->orderBy('nome')->get(),
             'alunos' => Aluno::ativos()
                 ->select('id', 'nome', 'ano_escolar', 'responsavel_id')
@@ -71,7 +71,7 @@ class SaudeConvocacaoController extends Controller
     public function show(SaudeConvocacao $convocacao)
     {
         $convocacao->load([
-            'programa',
+            'programa.area',
             'unidade',
             'user',
             'alunos' => fn ($q) => $q->orderBy('nome')->with('responsavel:id,nome,telefone,whatsapp'),
@@ -88,7 +88,7 @@ class SaudeConvocacaoController extends Controller
 
         return Inertia::render('Saude/Convocacoes/Edit', [
             'convocacao' => $convocacao,
-            'programas' => SaudePrograma::ativos()->select('id', 'nome', 'area')->orderBy('nome')->get(),
+            'programas' => SaudePrograma::ativos()->with('area:id,nome')->select('id', 'nome', 'area_id')->orderBy('nome')->get(),
             'unidades' => Unidade::select('id', 'nome')->orderBy('nome')->get(),
             'alunos' => Aluno::ativos()
                 ->select('id', 'nome', 'ano_escolar', 'responsavel_id')

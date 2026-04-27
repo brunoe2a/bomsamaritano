@@ -11,14 +11,14 @@ import { useSwal } from '@/composables/useSwal';
 import { computed } from 'vue';
 import type { Aluno, BreadcrumbItem } from '@/types';
 
-interface ProgramaSaude { id: number; nome: string; area: string }
+interface ProgramaSaude { id: number; nome: string; area: { id: number; nome: string } | null }
 
 interface AtendimentoSaude {
     id: number;
     data_atendimento: string;
     profissional: string | null;
     observacoes: string | null;
-    programa: { id: number; nome: string; area: string };
+    programa: { id: number; nome: string; area: { id: number; nome: string } | null };
     convocacao: { id: number; titulo: string } | null;
 }
 
@@ -53,19 +53,10 @@ function deletarAtendimento(a: AtendimentoSaude) {
     swalDelete(`O atendimento de ${a.programa.nome} em ${formatDate(a.data_atendimento)} será removido.`, `/saude/atendimentos/${a.id}`);
 }
 
-const areaLabels: Record<string, string> = {
-    odontologia: 'Odontologia',
-    psicologia: 'Psicologia',
-    medica: 'Médica',
-    nutricao: 'Nutrição',
-    fonoaudiologia: 'Fonoaudiologia',
-    geral: 'Geral',
-};
-
 function formatDate(d: string) { return new Date(d).toLocaleDateString('pt-BR'); }
 
 const programaSaudeOptions = computed(() =>
-    props.programas_saude.map(p => ({ value: p.id, label: p.nome, hint: areaLabels[p.area] || p.area })),
+    props.programas_saude.map(p => ({ value: p.id, label: p.nome, hint: p.area?.nome ?? '' })),
 );
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -191,7 +182,7 @@ function calcIdade(dataNasc: string): number {
                                 <div class="flex-1">
                                     <p class="font-medium text-foreground">
                                         {{ a.programa.nome }}
-                                        <span class="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-normal text-rose-700">{{ areaLabels[a.programa.area] }}</span>
+                                        <span v-if="a.programa.area" class="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-normal text-rose-700">{{ a.programa.area.nome }}</span>
                                     </p>
                                     <p class="text-xs text-muted-foreground">
                                         {{ formatDate(a.data_atendimento) }}

@@ -16,7 +16,7 @@ interface Atendimento {
     profissional: string | null;
     observacoes: string | null;
     aluno: { id: number; nome: string };
-    programa: { id: number; nome: string; area: string };
+    programa: { id: number; nome: string; area: { id: number; nome: string } | null };
 }
 
 const { confirmDelete: swalDelete } = useSwal();
@@ -24,7 +24,7 @@ const { confirmDelete: swalDelete } = useSwal();
 const props = defineProps<{
     atendimentos: PaginatedData<Atendimento>;
     filtros: Record<string, string>;
-    programas: { id: number; nome: string; area: string }[];
+    programas: { id: number; nome: string; area: { id: number; nome: string } | null }[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -58,7 +58,7 @@ function confirmDelete(a: Atendimento) {
 
 function formatData(d: string) { return new Date(d).toLocaleDateString('pt-BR'); }
 
-const programaOptions = computed(() => props.programas.map(p => ({ value: String(p.id), label: p.nome, hint: p.area })));
+const programaOptions = computed(() => props.programas.map(p => ({ value: String(p.id), label: p.nome, hint: p.area?.nome ?? '' })));
 </script>
 
 <template>

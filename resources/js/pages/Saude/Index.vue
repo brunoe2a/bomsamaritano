@@ -11,7 +11,7 @@ interface Convocacao {
     local: string | null;
     status: string;
     alunos_count: number;
-    programa: { id: number; nome: string; area: string } | null;
+    programa: { id: number; nome: string; area: { id: number; nome: string } | null } | null;
 }
 
 interface Atendimento {
@@ -19,7 +19,7 @@ interface Atendimento {
     data_atendimento: string;
     profissional: string | null;
     aluno: { id: number; nome: string };
-    programa: { id: number; nome: string; area: string };
+    programa: { id: number; nome: string; area: { id: number; nome: string } | null };
 }
 
 defineProps<{

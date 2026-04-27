@@ -5,6 +5,7 @@ import { Plus, Eye, Pencil, Trash2, Search, FileText, Users } from 'lucide-vue-n
 import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
 import SearchableSelect from '@/components/SearchableSelect.vue';
+import NativeSelect from '@/components/NativeSelect.vue';
 import { useSwal } from '@/composables/useSwal';
 import { computed } from 'vue';
 import type { PaginatedData, BreadcrumbItem } from '@/types';
@@ -67,11 +68,6 @@ const statusClasses: Record<string, string> = {
 };
 
 const programaOptions = computed(() => props.programas.map(p => ({ value: String(p.id), label: p.nome })));
-const statusOptions = [
-    { value: 'planejada', label: 'Planejada' },
-    { value: 'realizada', label: 'Realizada' },
-    { value: 'cancelada', label: 'Cancelada' },
-];
 </script>
 
 <template>
@@ -104,13 +100,12 @@ const statusOptions = [
                         />
                     </div>
                     <div class="w-48">
-                        <SearchableSelect
-                            v-model="status"
-                            :options="statusOptions"
-                            placeholder="Todos os status"
-                            allow-empty
-                            empty-label="Todos os status"
-                        />
+                        <NativeSelect v-model="status">
+                            <option value="">Todos os status</option>
+                            <option value="planejada">Planejada</option>
+                            <option value="realizada">Realizada</option>
+                            <option value="cancelada">Cancelada</option>
+                        </NativeSelect>
                     </div>
                 </div>
             </div>

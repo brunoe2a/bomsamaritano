@@ -4,6 +4,7 @@ import { ArrowLeft, Search } from 'lucide-vue-next';
 import { ClipboardDocumentListIcon, UserIcon } from '@heroicons/vue/24/outline';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SearchableSelect from '@/components/SearchableSelect.vue';
+import NativeSelect from '@/components/NativeSelect.vue';
 import DatePicker from '@/components/DatePicker.vue';
 import type { Aluno, Curso, BreadcrumbItem } from '@/types';
 import { computed, ref } from 'vue';
@@ -144,7 +145,10 @@ function cancelarTroca() {
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium">Ano Escolar</label>
-                            <SearchableSelect v-model="form.ano_escolar" :options="anoEscolarOptions" placeholder="Selecione" allow-empty empty-label="—" />
+                            <NativeSelect v-model="form.ano_escolar">
+                                <option value="">Selecione</option>
+                                <option v-for="a in anosEscolares" :key="a" :value="a">{{ a }}</option>
+                            </NativeSelect>
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium">Foto</label>
@@ -159,7 +163,12 @@ function cancelarTroca() {
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium">Status</label>
-                            <SearchableSelect v-model="form.status" :options="statusOptions" placeholder="Selecione" />
+                            <NativeSelect v-model="form.status">
+                                <option value="ativo">Ativo</option>
+                                <option value="inativo">Inativo</option>
+                                <option value="trancado">Trancado</option>
+                                <option value="concluido">Concluído</option>
+                            </NativeSelect>
                         </div>
                         <div class="sm:col-span-2">
                             <label class="mb-1 block text-sm font-medium">Observações</label>
@@ -247,7 +256,12 @@ function cancelarTroca() {
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium">Renda Familiar</label>
-                            <SearchableSelect v-model="form.responsavel.renda_familiar" :options="rendaOptions" placeholder="Selecione" allow-empty empty-label="—" />
+                            <NativeSelect v-model="form.responsavel.renda_familiar">
+                                <option value="">Selecione</option>
+                                <option value="menos_1_salario">Menos de 1 salário</option>
+                                <option value="ate_2_salarios">Até 2 salários</option>
+                                <option value="acima_3_salarios">Acima de 3 salários</option>
+                            </NativeSelect>
                         </div>
                     </div>
                 </div>

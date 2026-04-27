@@ -13,7 +13,7 @@ class SaudeAtendimentoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = SaudeAtendimento::with(['aluno:id,nome', 'programa:id,nome,area']);
+        $query = SaudeAtendimento::with(['aluno:id,nome', 'programa:id,nome,area_id', 'programa.area:id,nome']);
 
         if ($request->filled('busca')) {
             $busca = $request->busca;
@@ -32,7 +32,7 @@ class SaudeAtendimentoController extends Controller
         return Inertia::render('Saude/Atendimentos/Index', [
             'atendimentos' => $query->latest('data_atendimento')->paginate(20)->withQueryString(),
             'filtros' => $request->only(['busca', 'programa_id', 'data_inicio', 'data_fim']),
-            'programas' => SaudePrograma::ativos()->select('id', 'nome', 'area')->orderBy('nome')->get(),
+            'programas' => SaudePrograma::ativos()->with('area:id,nome')->select('id', 'nome', 'area_id')->orderBy('nome')->get(),
         ]);
     }
 

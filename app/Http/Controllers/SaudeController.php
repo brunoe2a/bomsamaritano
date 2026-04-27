@@ -20,14 +20,14 @@ class SaudeController extends Controller
                     ->whereYear('data_atendimento', now()->year)
                     ->count(),
             ],
-            'proximas_convocacoes' => SaudeConvocacao::with('programa:id,nome,area')
+            'proximas_convocacoes' => SaudeConvocacao::with(['programa:id,nome,area_id', 'programa.area:id,nome'])
                 ->withCount('alunos')
                 ->where('status', 'planejada')
                 ->where('data', '>=', now()->toDateString())
                 ->orderBy('data')
                 ->limit(5)
                 ->get(),
-            'ultimos_atendimentos' => SaudeAtendimento::with(['aluno:id,nome', 'programa:id,nome,area'])
+            'ultimos_atendimentos' => SaudeAtendimento::with(['aluno:id,nome', 'programa:id,nome,area_id', 'programa.area:id,nome'])
                 ->latest('data_atendimento')
                 ->limit(10)
                 ->get(),

@@ -111,7 +111,7 @@ class AlunoController extends Controller
             'responsavel',
             'matriculas.turma.curso',
             'matriculas.turma.professores',
-            'atendimentosSaude' => fn ($q) => $q->latest('data_atendimento')->with(['programa:id,nome,area', 'convocacao:id,titulo']),
+            'atendimentosSaude' => fn ($q) => $q->latest('data_atendimento')->with(['programa:id,nome,area_id', 'programa.area:id,nome', 'convocacao:id,titulo']),
         ]);
 
         // Frequência do aluno
@@ -134,7 +134,7 @@ class AlunoController extends Controller
                 'presencas' => $frequencia->presencas ?? 0,
                 'percentual' => $percentualFrequencia,
             ],
-            'programas_saude' => SaudePrograma::ativos()->select('id', 'nome', 'area')->orderBy('nome')->get(),
+            'programas_saude' => SaudePrograma::ativos()->with('area:id,nome')->select('id', 'nome', 'area_id')->orderBy('nome')->get(),
         ]);
     }
 

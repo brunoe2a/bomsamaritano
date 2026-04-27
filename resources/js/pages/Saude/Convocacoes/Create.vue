@@ -7,7 +7,7 @@ import SearchableSelect from '@/components/SearchableSelect.vue';
 import DatePicker from '@/components/DatePicker.vue';
 import type { BreadcrumbItem } from '@/types';
 
-interface Programa { id: number; nome: string; area: string }
+interface Programa { id: number; nome: string; area: { id: number; nome: string } | null }
 interface Unidade { id: number; nome: string }
 interface AlunoOption {
     id: number;
@@ -67,7 +67,7 @@ function submit() {
         .post('/saude/convocacoes');
 }
 
-const programaOptions = computed(() => props.programas.map(p => ({ value: p.id, label: p.nome, hint: p.area })));
+const programaOptions = computed(() => props.programas.map(p => ({ value: p.id, label: p.nome, hint: p.area?.nome ?? '' })));
 const unidadeOptions = computed(() => props.unidades.map(u => ({ value: u.id, label: u.nome })));
 </script>
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\AlunoController;
 use App\Http\Controllers\ResponsavelController;
 use App\Http\Controllers\SaudeController;
 use App\Http\Controllers\SaudeProgramaController;
+use App\Http\Controllers\SaudeAreaController;
 use App\Http\Controllers\SaudeConvocacaoController;
 use App\Http\Controllers\SaudeAtendimentoController;
 use App\Http\Controllers\CursoController;
@@ -90,6 +91,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('programas', SaudeProgramaController::class)
             ->only(['index', 'store', 'update', 'destroy'])
             ->parameters(['programas' => 'programa']);
+
+        Route::resource('areas', SaudeAreaController::class)
+            ->only(['store', 'update', 'destroy'])
+            ->parameters(['areas' => 'area']);
 
         Route::resource('convocacoes', SaudeConvocacaoController::class)
             ->parameters(['convocacoes' => 'convocacao']);

@@ -1,18 +1,25 @@
 <script setup lang="ts">
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { Head, useForm, router } from '@inertiajs/vue3';
+import { ref, watch, computed } from 'vue';
 import { Plus, Pencil, Trash2, Search, Stethoscope } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import Pagination from '@/components/Pagination.vue';
 import SearchableSelect from '@/components/SearchableSelect.vue';
+import NativeSelect from '@/components/NativeSelect.vue';
+import CreatableSelect from '@/components/CreatableSelect.vue';
 import { useSwal } from '@/composables/useSwal';
-import { computed } from 'vue';
 import type { PaginatedData, BreadcrumbItem } from '@/types';
+
+interface Area {
+    id: number;
+    nome: string;
+}
 
 interface Programa {
     id: number;
     nome: string;
-    area: string;
+    area_id: number;
+    area: Area | null;
     descricao: string | null;
     cor: string | null;
     status: string;
@@ -25,6 +32,7 @@ const { confirmDelete: swalDelete } = useSwal();
 const props = defineProps<{
     programas: PaginatedData<Programa>;
     filtros: Record<string, string>;
+    areas: Area[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -33,39 +41,37 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Programas', href: '/saude/programas' },
 ];
 
-const areas = [
-    { value: 'odontologia', label: 'Odontologia' },
-    { value: 'psicologia', label: 'Psicologia' },
-    { value: 'medica', label: 'Médica' },
-    { value: 'nutricao', label: 'Nutrição' },
-    { value: 'fonoaudiologia', label: 'Fonoaudiologia' },
-    { value: 'geral', label: 'Geral' },
-];
-const areaLabel = (v: string) => areas.find(a => a.value === v)?.label || v;
-const statusOptions = [
-    { value: 'ativo', label: 'Ativo' },
-    { value: 'inativo', label: 'Inativo' },
-];
+const areaOptions = computed(() => props.areas.map(a => ({ value: a.id, label: a.nome })));
+const areaFilterOptions = computed(() => props.areas.map(a => ({ value: String(a.id), label: a.nome })));
 
 const busca = ref(props.filtros.busca || '');
-const area = ref(props.filtros.area || '');
+const areaFiltroId = ref(props.filtros.area_id || '');
 let debounce: ReturnType<typeof setTimeout>;
 function applyFilters() {
     clearTimeout(debounce);
     debounce = setTimeout(() => {
-        router.get('/saude/programas', { busca: busca.value || undefined, area: area.value || undefined }, { preserveState: true, replace: true });
+        router.get('/saude/programas', { busca: busca.value || undefined, area_id: areaFiltroId.value || undefined }, { preserveState: true, replace: true });
     }, 300);
 }
-watch([busca, area], applyFilters);
+watch([busca, areaFiltroId], applyFilters);
 
 const showModal = ref(false);
 const editing = ref<Programa | null>(null);
-const form = useForm({ nome: '', area: 'geral', descricao: '', cor: '#F5A623', status: 'ativo' });
+
+const form = useForm({
+    nome: '',
+    area_id: null as number | null,
+    area: '' as string,
+    descricao: '',
+    cor: '#F5A623',
+    status: 'ativo',
+});
 
 function openCreate() {
     editing.value = null;
     form.reset();
-    form.area = 'geral';
+    form.area_id = null;
+    form.area = '';
     form.cor = '#F5A623';
     form.status = 'ativo';
     showModal.value = true;
@@ -74,7 +80,8 @@ function openCreate() {
 function openEdit(p: Programa) {
     editing.value = p;
     form.nome = p.nome;
-    form.area = p.area;
+    form.area_id = p.area_id;
+    form.area = p.area?.nome || '';
     form.descricao = p.descricao || '';
     form.cor = p.cor || '#F5A623';
     form.status = p.status;
@@ -116,7 +123,7 @@ function confirmDelete(p: Programa) {
                         <input v-model="busca" type="text" placeholder="Buscar por nome..." class="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none focus:border-primary" />
                     </div>
                     <div class="w-56">
-                        <SearchableSelect v-model="area" :options="areas" placeholder="Todas as áreas" allow-empty empty-label="Todas as áreas" />
+                        <SearchableSelect v-model="areaFiltroId" :options="areaFilterOptions" placeholder="Todas as áreas" allow-empty empty-label="Todas as áreas" />
                     </div>
                 </div>
             </div>
@@ -140,7 +147,7 @@ function confirmDelete(p: Programa) {
                                 <span :style="{ background: p.cor || '#F5A623' }" class="mr-2 inline-block h-3 w-3 rounded-full align-middle"></span>
                                 {{ p.nome }}
                             </td>
-                            <td class="px-4 py-3 text-muted-foreground">{{ areaLabel(p.area) }}</td>
+                            <td class="px-4 py-3 text-muted-foreground">{{ p.area?.nome ?? '—' }}</td>
                             <td class="px-4 py-3 text-center">{{ p.convocacoes_count }}</td>
                             <td class="px-4 py-3 text-center">{{ p.atendimentos_count }}</td>
                             <td class="px-4 py-3">
@@ -167,7 +174,6 @@ function confirmDelete(p: Programa) {
             <Pagination :links="programas.links" />
         </div>
 
-        <!-- Modal -->
         <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div class="w-full max-w-lg rounded-xl bg-card p-6 shadow-xl">
                 <h2 class="mb-4 text-lg font-semibold text-foreground">{{ editing ? 'Editar Programa' : 'Novo Programa' }}</h2>
@@ -180,11 +186,23 @@ function confirmDelete(p: Programa) {
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="mb-1 block text-sm font-medium">Área *</label>
-                            <SearchableSelect v-model="form.area" :options="areas" placeholder="Selecione" />
+                            <CreatableSelect
+                                v-model:model-value-id="form.area_id"
+                                v-model:model-value-name="form.area"
+                                :options="areaOptions"
+                                placeholder="Selecione ou cadastre"
+                                search-placeholder="Pesquisar ou digitar nova área..."
+                                create-label-prefix="Cadastrar nova área:"
+                                :error="!!form.errors.area"
+                            />
+                            <p v-if="form.errors.area" class="mt-1 text-xs text-red-500">{{ form.errors.area }}</p>
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium">Status</label>
-                            <SearchableSelect v-model="form.status" :options="statusOptions" placeholder="Selecione" />
+                            <NativeSelect v-model="form.status">
+                                <option value="ativo">Ativo</option>
+                                <option value="inativo">Inativo</option>
+                            </NativeSelect>
                         </div>
                     </div>
                     <div>

@@ -29,21 +29,10 @@
         <h2>Núcleo de Saúde — Convocação / Lista de Presença</h2>
     </div>
 
-    @php
-        $areaLabels = [
-            'odontologia' => 'Odontologia',
-            'psicologia' => 'Psicologia',
-            'medica' => 'Médica',
-            'nutricao' => 'Nutrição',
-            'fonoaudiologia' => 'Fonoaudiologia',
-            'geral' => 'Geral',
-        ];
-    @endphp
-
     <div class="info-box">
         <div class="row"><strong>Título:</strong> {{ $convocacao->titulo }}</div>
         <div class="row"><strong>Programa:</strong> {{ $convocacao->programa?->nome }}
-            <span class="area-badge">{{ $areaLabels[$convocacao->programa?->area] ?? $convocacao->programa?->area }}</span>
+            <span class="area-badge">{{ $convocacao->programa?->area?->nome }}</span>
         </div>
         <div class="row"><strong>Data:</strong> {{ optional($convocacao->data)->format('d/m/Y') }}
             @if($convocacao->hora) — {{ \Illuminate\Support\Carbon::parse($convocacao->hora)->format('H:i') }} @endif

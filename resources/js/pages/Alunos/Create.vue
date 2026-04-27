@@ -4,6 +4,7 @@ import { ArrowLeft, Search } from 'lucide-vue-next';
 import { ClipboardDocumentListIcon, AcademicCapIcon, UserIcon } from '@heroicons/vue/24/outline';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SearchableSelect from '@/components/SearchableSelect.vue';
+import NativeSelect from '@/components/NativeSelect.vue';
 import DatePicker from '@/components/DatePicker.vue';
 import type { Curso, BreadcrumbItem } from '@/types';
 import { computed, ref } from 'vue';
@@ -222,7 +223,12 @@ const rendaOptions = [
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium text-foreground">Renda Familiar</label>
-                            <SearchableSelect v-model="form.responsavel.renda_familiar" :options="rendaOptions" placeholder="Selecione" allow-empty empty-label="—" />
+                            <NativeSelect v-model="form.responsavel.renda_familiar">
+                                <option value="">Selecione</option>
+                                <option value="menos_1_salario">Menos de 1 salário</option>
+                                <option value="ate_2_salarios">Até 2 salários</option>
+                                <option value="acima_3_salarios">Acima de 3 salários</option>
+                            </NativeSelect>
                         </div>
 
                         <div class="sm:col-span-2">
@@ -244,7 +250,10 @@ const rendaOptions = [
                             <input v-model="form.responsavel.endereco_cidade" type="text" placeholder="Cidade" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
                         </div>
                         <div>
-                            <SearchableSelect v-model="form.responsavel.endereco_estado" :options="estadoOptions" placeholder="UF" allow-empty empty-label="UF" />
+                            <NativeSelect v-model="form.responsavel.endereco_estado">
+                                <option value="">UF</option>
+                                <option v-for="uf in estados" :key="uf" :value="uf">{{ uf }}</option>
+                            </NativeSelect>
                         </div>
                         <div>
                             <input v-model="form.responsavel.endereco_cep" type="text" placeholder="CEP" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
@@ -308,7 +317,10 @@ const rendaOptions = [
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium text-foreground">Ano Escolar</label>
-                            <SearchableSelect v-model="form.ano_escolar" :options="anoEscolarOptions" placeholder="Selecione" allow-empty empty-label="—" />
+                            <NativeSelect v-model="form.ano_escolar">
+                                <option value="">Selecione</option>
+                                <option v-for="a in anosEscolares" :key="a" :value="a">{{ a }}</option>
+                            </NativeSelect>
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium text-foreground">Foto</label>
@@ -316,7 +328,12 @@ const rendaOptions = [
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium text-foreground">Status</label>
-                            <SearchableSelect v-model="form.status" :options="statusOptions" placeholder="Selecione" />
+                            <NativeSelect v-model="form.status">
+                                <option value="ativo">Ativo</option>
+                                <option value="inativo">Inativo</option>
+                                <option value="trancado">Trancado</option>
+                                <option value="concluido">Concluído</option>
+                            </NativeSelect>
                         </div>
                         <div class="sm:col-span-2">
                             <label class="mb-1 block text-sm font-medium text-foreground">Observações</label>
