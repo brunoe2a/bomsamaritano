@@ -1,6 +1,11 @@
 <?php
 
 use App\Http\Controllers\AlunoController;
+use App\Http\Controllers\ResponsavelController;
+use App\Http\Controllers\SaudeController;
+use App\Http\Controllers\SaudeProgramaController;
+use App\Http\Controllers\SaudeConvocacaoController;
+use App\Http\Controllers\SaudeAtendimentoController;
 use App\Http\Controllers\CursoController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportController;
@@ -23,6 +28,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Alunos
     Route::middleware('permission:alunos.listar')->group(function () {
         Route::resource('alunos', AlunoController::class);
+    });
+
+    // Responsáveis
+    Route::middleware('permission:responsaveis.listar')->group(function () {
+        Route::get('responsaveis/search', [ResponsavelController::class, 'search'])->name('responsaveis.search');
+        Route::resource('responsaveis', ResponsavelController::class)->parameters([
+            'responsaveis' => 'responsavel'
+        ]);
     });
 
     // Cursos
@@ -70,6 +83,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('unidades', UnidadeController::class);
     });
 
+    // Núcleo de Saúde
+    Route::middleware('permission:saude.listar')->prefix('saude')->name('saude.')->group(function () {
+        Route::get('/', [SaudeController::class, 'index'])->name('index');
+
+        Route::resource('programas', SaudeProgramaController::class)
+            ->only(['index', 'store', 'update', 'destroy'])
+            ->parameters(['programas' => 'programa']);
+
+        Route::resource('convocacoes', SaudeConvocacaoController::class)
+            ->parameters(['convocacoes' => 'convocacao']);
+        Route::post('convocacoes/{convocacao}/presenca', [SaudeConvocacaoController::class, 'registrarPresenca'])
+            ->name('convocacoes.presenca')
+            ->middleware('permission:saude.editar');
+
+        Route::resource('atendimentos', SaudeAtendimentoController::class)
+            ->only(['index', 'store', 'update', 'destroy'])
+            ->parameters(['atendimentos' => 'atendimento']);
+    });
+
     // Usuários (Somente Admins)
     Route::middleware('role:admin')->group(function () {
         Route::resource('usuarios', \App\Http\Controllers\UserController::class);
@@ -82,6 +114,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('alunos/{aluno}/ficha', [ExportController::class, 'fichaAluno'])->name('alunos.ficha');
         Route::get('frequencia', [ExportController::class, 'relatorioFrequencia'])->name('frequencia');
         Route::get('financeiro/pdf', [ExportController::class, 'relatorioFinanceiro'])->name('financeiro.pdf');
+        Route::get('saude/convocacoes/{convocacao}/pdf', [ExportController::class, 'saudeConvocacao'])->name('saude.convocacao');
     });
 });
 

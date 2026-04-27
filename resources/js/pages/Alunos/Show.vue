@@ -1,15 +1,72 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft, Pencil, Phone, MapPin, GraduationCap, FileText } from 'lucide-vue-next';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, Pencil, Phone, MapPin, GraduationCap, FileText, HeartPulse, Plus, Trash2 } from 'lucide-vue-next';
 import { ChartBarIcon, ExclamationTriangleIcon, BookOpenIcon, UserIcon, DevicePhoneMobileIcon } from '@heroicons/vue/24/outline';
+import { ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
+import SearchableSelect from '@/components/SearchableSelect.vue';
+import DatePicker from '@/components/DatePicker.vue';
+import { useSwal } from '@/composables/useSwal';
+import { computed } from 'vue';
 import type { Aluno, BreadcrumbItem } from '@/types';
 
+interface ProgramaSaude { id: number; nome: string; area: string }
+
+interface AtendimentoSaude {
+    id: number;
+    data_atendimento: string;
+    profissional: string | null;
+    observacoes: string | null;
+    programa: { id: number; nome: string; area: string };
+    convocacao: { id: number; titulo: string } | null;
+}
+
 const props = defineProps<{
-    aluno: Aluno;
+    aluno: Aluno & { atendimentos_saude?: AtendimentoSaude[] };
     frequencia: { total: number; presencas: number; percentual: number };
+    programas_saude: ProgramaSaude[];
 }>();
+
+const { confirmDelete: swalDelete } = useSwal();
+
+const showFormSaude = ref(false);
+const formSaude = useForm({
+    aluno_id: props.aluno.id,
+    programa_id: '' as number | string,
+    data_atendimento: new Date().toISOString().slice(0, 10),
+    profissional: '',
+    observacoes: '',
+});
+function submitAtendimento() {
+    formSaude.post('/saude/atendimentos', {
+        preserveScroll: true,
+        onSuccess: () => {
+            showFormSaude.value = false;
+            formSaude.reset();
+            formSaude.aluno_id = props.aluno.id;
+            formSaude.data_atendimento = new Date().toISOString().slice(0, 10);
+        },
+    });
+}
+function deletarAtendimento(a: AtendimentoSaude) {
+    swalDelete(`O atendimento de ${a.programa.nome} em ${formatDate(a.data_atendimento)} será removido.`, `/saude/atendimentos/${a.id}`);
+}
+
+const areaLabels: Record<string, string> = {
+    odontologia: 'Odontologia',
+    psicologia: 'Psicologia',
+    medica: 'Médica',
+    nutricao: 'Nutrição',
+    fonoaudiologia: 'Fonoaudiologia',
+    geral: 'Geral',
+};
+
+function formatDate(d: string) { return new Date(d).toLocaleDateString('pt-BR'); }
+
+const programaSaudeOptions = computed(() =>
+    props.programas_saude.map(p => ({ value: p.id, label: p.nome, hint: areaLabels[p.area] || p.area })),
+);
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -88,6 +145,64 @@ function calcIdade(dataNasc: string): number {
                                 <p v-if="frequencia.percentual < 75" class="flex items-center gap-1 font-medium text-red-600"><ExclamationTriangleIcon class="size-4" /> Frequência abaixo de 75%</p>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Saúde -->
+                    <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+                        <div class="mb-4 flex items-center justify-between">
+                            <h3 class="flex items-center gap-2 text-lg font-semibold text-foreground">
+                                <HeartPulse class="h-5 w-5 text-rose-500" /> Núcleo de Saúde
+                            </h3>
+                            <button @click="showFormSaude = !showFormSaude" class="inline-flex items-center gap-1 rounded-md border border-input px-3 py-1.5 text-xs font-medium hover:bg-muted">
+                                <Plus class="h-3 w-3" /> Registrar atendimento
+                            </button>
+                        </div>
+
+                        <form v-if="showFormSaude" @submit.prevent="submitAtendimento" class="mb-4 grid gap-3 rounded-lg border border-border bg-muted/20 p-4 sm:grid-cols-2">
+                            <div class="sm:col-span-2">
+                                <label class="mb-1 block text-xs font-medium">Programa *</label>
+                                <SearchableSelect v-model="formSaude.programa_id" :options="programaSaudeOptions" placeholder="Selecione" :error="!!formSaude.errors.programa_id" />
+                                <p v-if="formSaude.errors.programa_id" class="mt-1 text-xs text-red-500">{{ formSaude.errors.programa_id }}</p>
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-xs font-medium">Data *</label>
+                                <DatePicker v-model="formSaude.data_atendimento" />
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-xs font-medium">Profissional</label>
+                                <input v-model="formSaude.profissional" type="text" class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="mb-1 block text-xs font-medium">Observações</label>
+                                <textarea v-model="formSaude.observacoes" rows="2" class="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none focus:border-primary"></textarea>
+                            </div>
+                            <div class="sm:col-span-2 flex justify-end gap-2">
+                                <button type="button" @click="showFormSaude = false" class="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted">Cancelar</button>
+                                <button type="submit" :disabled="formSaude.processing" class="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                                    {{ formSaude.processing ? 'Salvando...' : 'Salvar' }}
+                                </button>
+                            </div>
+                        </form>
+
+                        <p v-if="!aluno.atendimentos_saude?.length" class="text-sm text-muted-foreground">Nenhum atendimento de saúde registrado.</p>
+
+                        <ul v-else class="divide-y divide-border">
+                            <li v-for="a in aluno.atendimentos_saude" :key="a.id" class="flex items-center justify-between gap-3 py-3">
+                                <div class="flex-1">
+                                    <p class="font-medium text-foreground">
+                                        {{ a.programa.nome }}
+                                        <span class="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-normal text-rose-700">{{ areaLabels[a.programa.area] }}</span>
+                                    </p>
+                                    <p class="text-xs text-muted-foreground">
+                                        {{ formatDate(a.data_atendimento) }}
+                                        <span v-if="a.profissional"> · {{ a.profissional }}</span>
+                                        <span v-if="a.convocacao"> · via convocação <Link :href="`/saude/convocacoes/${a.convocacao.id}`" class="text-primary hover:underline">"{{ a.convocacao.titulo }}"</Link></span>
+                                    </p>
+                                    <p v-if="a.observacoes" class="mt-1 text-xs text-muted-foreground">{{ a.observacoes }}</p>
+                                </div>
+                                <button @click="deletarAtendimento(a)" class="rounded-md p-1.5 hover:bg-red-50 dark:hover:bg-red-950/30" title="Remover"><Trash2 class="h-4 w-4 text-red-500" /></button>
+                            </li>
+                        </ul>
                     </div>
 
                     <!-- Turmas Matriculadas -->

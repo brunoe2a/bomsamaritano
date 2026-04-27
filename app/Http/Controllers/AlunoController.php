@@ -6,6 +6,7 @@ use App\Models\Aluno;
 use App\Models\Responsavel;
 use App\Models\Curso;
 use App\Models\Turma;
+use App\Models\SaudePrograma;
 use App\Http\Requests\StoreAlunoRequest;
 use App\Http\Requests\UpdateAlunoRequest;
 use Illuminate\Http\Request;
@@ -53,20 +54,33 @@ class AlunoController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         return Inertia::render('Alunos/Create', [
             'cursos' => Curso::ativos()->with(['turmas' => fn ($q) => $q->emAndamento()])->get(),
+            'responsaveis' => Responsavel::query()
+                ->select('id', 'nome', 'cpf', 'telefone', 'whatsapp')
+                ->withCount('alunos')
+                ->orderBy('nome')
+                ->get(),
+            'responsavel_pre_selecionado' => $request->filled('responsavel_id')
+                ? Responsavel::find($request->integer('responsavel_id'))
+                : null,
         ]);
     }
 
     public function store(StoreAlunoRequest $request)
     {
         DB::transaction(function () use ($request) {
-            $responsavel = Responsavel::create($request->validated()['responsavel']);
+            if ($request->input('responsavel_modo') === 'existente') {
+                $responsavelId = (int) $request->input('responsavel_id');
+            } else {
+                $responsavel = Responsavel::create($request->validated()['responsavel']);
+                $responsavelId = $responsavel->id;
+            }
 
-            $alunoData = $request->safe()->except(['responsavel', 'turmas_ids', 'foto']);
-            $alunoData['responsavel_id'] = $responsavel->id;
+            $alunoData = $request->safe()->except(['responsavel', 'responsavel_modo', 'responsavel_id', 'turmas_ids', 'foto']);
+            $alunoData['responsavel_id'] = $responsavelId;
 
             if ($request->hasFile('foto')) {
                 $alunoData['foto'] = $request->file('foto')->store('alunos/fotos');
@@ -97,6 +111,7 @@ class AlunoController extends Controller
             'responsavel',
             'matriculas.turma.curso',
             'matriculas.turma.professores',
+            'atendimentosSaude' => fn ($q) => $q->latest('data_atendimento')->with(['programa:id,nome,area', 'convocacao:id,titulo']),
         ]);
 
         // Frequência do aluno
@@ -119,6 +134,7 @@ class AlunoController extends Controller
                 'presencas' => $frequencia->presencas ?? 0,
                 'percentual' => $percentualFrequencia,
             ],
+            'programas_saude' => SaudePrograma::ativos()->select('id', 'nome', 'area')->orderBy('nome')->get(),
         ]);
     }
 
@@ -129,17 +145,24 @@ class AlunoController extends Controller
         return Inertia::render('Alunos/Edit', [
             'aluno' => $aluno,
             'cursos' => Curso::ativos()->with(['turmas' => fn ($q) => $q->emAndamento()])->get(),
+            'responsaveis' => Responsavel::query()
+                ->select('id', 'nome', 'cpf', 'telefone', 'whatsapp')
+                ->withCount('alunos')
+                ->orderBy('nome')
+                ->get(),
         ]);
     }
 
     public function update(UpdateAlunoRequest $request, Aluno $aluno)
     {
         DB::transaction(function () use ($request, $aluno) {
-            if ($request->has('responsavel')) {
+            if ($request->filled('responsavel_id') && (int) $request->input('responsavel_id') !== $aluno->responsavel_id) {
+                $aluno->responsavel_id = (int) $request->input('responsavel_id');
+            } elseif ($request->has('responsavel')) {
                 $aluno->responsavel->update($request->validated()['responsavel']);
             }
 
-            $alunoData = $request->safe()->except(['responsavel', 'turmas_ids', 'foto']);
+            $alunoData = $request->safe()->except(['responsavel', 'responsavel_id', 'turmas_ids', 'foto']);
 
             if ($request->hasFile('foto')) {
                 if ($aluno->foto) {

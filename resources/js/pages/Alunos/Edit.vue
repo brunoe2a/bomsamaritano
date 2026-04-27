@@ -1,13 +1,26 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3';
-import { ArrowLeft } from 'lucide-vue-next';
+import { ArrowLeft, Search } from 'lucide-vue-next';
 import { ClipboardDocumentListIcon, UserIcon } from '@heroicons/vue/24/outline';
 import AppLayout from '@/layouts/AppLayout.vue';
+import SearchableSelect from '@/components/SearchableSelect.vue';
+import DatePicker from '@/components/DatePicker.vue';
 import type { Aluno, Curso, BreadcrumbItem } from '@/types';
+import { computed, ref } from 'vue';
+
+interface ResponsavelOption {
+    id: number;
+    nome: string;
+    cpf: string | null;
+    telefone: string | null;
+    whatsapp: string | null;
+    alunos_count: number;
+}
 
 const props = defineProps<{
     aluno: Aluno;
     cursos: (Curso & { turmas: { id: number; nome: string }[] })[];
+    responsaveis: ResponsavelOption[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -26,6 +39,7 @@ const form = useForm({
     status: props.aluno.status,
     observacoes: props.aluno.observacoes || '',
     turmas_ids: currentTurmaIds,
+    responsavel_id: props.aluno.responsavel_id,
     responsavel: {
         nome: props.aluno.responsavel?.nome || '',
         endereco_rua: props.aluno.responsavel?.endereco_rua || '',
@@ -65,6 +79,40 @@ function handleFoto(event: Event) {
 
 const anosEscolares = ['1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano', '6º Ano', '7º Ano', '8º Ano', '9º Ano', '1º EM', '2º EM', '3º EM'];
 const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+
+const anoEscolarOptions = anosEscolares.map(a => ({ value: a, label: a }));
+const estadoOptions = estados.map(uf => ({ value: uf, label: uf }));
+const statusOptions = [
+    { value: 'ativo', label: 'Ativo' },
+    { value: 'inativo', label: 'Inativo' },
+    { value: 'trancado', label: 'Trancado' },
+    { value: 'concluido', label: 'Concluído' },
+];
+const rendaOptions = [
+    { value: 'menos_1_salario', label: 'Menos de 1 salário' },
+    { value: 'ate_2_salarios', label: 'Até 2 salários' },
+    { value: 'acima_3_salarios', label: 'Acima de 3 salários' },
+];
+
+const trocandoResp = ref(false);
+const buscaResp = ref('');
+const responsaveisFiltrados = computed(() => {
+    const termo = buscaResp.value.trim().toLowerCase();
+    const lista = props.responsaveis.filter((r) => r.id !== props.aluno.responsavel_id);
+    if (!termo) return lista;
+    return lista.filter(
+        (r) =>
+            r.nome.toLowerCase().includes(termo) ||
+            (r.cpf ?? '').toLowerCase().includes(termo) ||
+            (r.telefone ?? '').includes(termo) ||
+            (r.whatsapp ?? '').includes(termo),
+    );
+});
+
+function cancelarTroca() {
+    trocandoResp.value = false;
+    form.responsavel_id = props.aluno.responsavel_id;
+}
 </script>
 
 <template>
@@ -92,14 +140,11 @@ const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium">Data de Nascimento *</label>
-                            <input v-model="form.data_nascimento" type="date" required class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            <DatePicker v-model="form.data_nascimento" />
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium">Ano Escolar</label>
-                            <select v-model="form.ano_escolar" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-                                <option value="">Selecione</option>
-                                <option v-for="a in anosEscolares" :key="a" :value="a">{{ a }}</option>
-                            </select>
+                            <SearchableSelect v-model="form.ano_escolar" :options="anoEscolarOptions" placeholder="Selecione" allow-empty empty-label="—" />
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium">Foto</label>
@@ -114,12 +159,7 @@ const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium">Status</label>
-                            <select v-model="form.status" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-                                <option value="ativo">Ativo</option>
-                                <option value="inativo">Inativo</option>
-                                <option value="trancado">Trancado</option>
-                                <option value="concluido">Concluído</option>
-                            </select>
+                            <SearchableSelect v-model="form.status" :options="statusOptions" placeholder="Selecione" />
                         </div>
                         <div class="sm:col-span-2">
                             <label class="mb-1 block text-sm font-medium">Observações</label>
@@ -130,7 +170,64 @@ const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG
 
                 <!-- Responsável -->
                 <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-                    <h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground"><UserIcon class="size-5" /> Responsável</h2>
+                    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <h2 class="flex items-center gap-2 text-lg font-semibold text-foreground"><UserIcon class="size-5" /> Responsável</h2>
+                        <button
+                            v-if="!trocandoResp"
+                            type="button"
+                            class="rounded-lg border border-input px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+                            @click="trocandoResp = true"
+                        >
+                            Trocar para outro responsável
+                        </button>
+                        <button
+                            v-else
+                            type="button"
+                            class="rounded-lg border border-input px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+                            @click="cancelarTroca"
+                        >
+                            Cancelar troca
+                        </button>
+                    </div>
+
+                    <div v-if="trocandoResp" class="mb-6 space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:bg-amber-950/30">
+                        <p class="text-sm text-foreground">Selecione o novo responsável (ao salvar, o aluno passará a pertencer ao escolhido):</p>
+                        <div class="relative">
+                            <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <input
+                                v-model="buscaResp"
+                                type="text"
+                                placeholder="Buscar por nome, CPF ou telefone..."
+                                class="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                            />
+                        </div>
+                        <div class="max-h-64 overflow-y-auto rounded-lg border border-border bg-background">
+                            <p v-if="!responsaveisFiltrados.length" class="p-4 text-center text-sm text-muted-foreground">Nenhum responsável encontrado.</p>
+                            <label
+                                v-for="r in responsaveisFiltrados"
+                                :key="r.id"
+                                class="flex cursor-pointer items-center justify-between gap-3 border-b border-border px-3 py-2 text-sm transition-colors last:border-0"
+                                :class="form.responsavel_id === r.id ? 'bg-primary/10' : 'hover:bg-muted'"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <input type="radio" :value="r.id" v-model="form.responsavel_id" class="text-primary focus:ring-primary" />
+                                    <div>
+                                        <p class="font-medium text-foreground">{{ r.nome }}</p>
+                                        <p class="text-xs text-muted-foreground">
+                                            <span v-if="r.cpf">CPF: {{ r.cpf }}</span>
+                                            <span v-if="r.telefone"> · Tel: {{ r.telefone }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <span class="rounded-full bg-muted px-2 py-0.5 text-xs">
+                                    {{ r.alunos_count }} {{ r.alunos_count === 1 ? 'filho' : 'filhos' }}
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <p v-if="!trocandoResp" class="mb-3 text-xs text-muted-foreground">Editando os dados do responsável atual. Para vincular o aluno a outro responsável já cadastrado, clique em "Trocar para outro responsável".</p>
+
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div class="sm:col-span-2">
                             <label class="mb-1 block text-sm font-medium">Nome *</label>
@@ -150,12 +247,7 @@ const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium">Renda Familiar</label>
-                            <select v-model="form.responsavel.renda_familiar" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-                                <option value="">Selecione</option>
-                                <option value="menos_1_salario">Menos de 1 salário</option>
-                                <option value="ate_2_salarios">Até 2 salários</option>
-                                <option value="acima_3_salarios">Acima de 3 salários</option>
-                            </select>
+                            <SearchableSelect v-model="form.responsavel.renda_familiar" :options="rendaOptions" placeholder="Selecione" allow-empty empty-label="—" />
                         </div>
                     </div>
                 </div>

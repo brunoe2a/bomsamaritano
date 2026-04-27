@@ -1,12 +1,26 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3';
-import { ArrowLeft } from 'lucide-vue-next';
+import { ArrowLeft, Search } from 'lucide-vue-next';
 import { ClipboardDocumentListIcon, AcademicCapIcon, UserIcon } from '@heroicons/vue/24/outline';
 import AppLayout from '@/layouts/AppLayout.vue';
+import SearchableSelect from '@/components/SearchableSelect.vue';
+import DatePicker from '@/components/DatePicker.vue';
 import type { Curso, BreadcrumbItem } from '@/types';
+import { computed, ref } from 'vue';
+
+interface ResponsavelOption {
+    id: number;
+    nome: string;
+    cpf: string | null;
+    telefone: string | null;
+    whatsapp: string | null;
+    alunos_count: number;
+}
 
 const props = defineProps<{
     cursos: (Curso & { turmas: { id: number; nome: string }[] })[];
+    responsaveis: ResponsavelOption[];
+    responsavel_pre_selecionado: ResponsavelOption | null;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -23,6 +37,8 @@ const form = useForm({
     status: 'ativo',
     observacoes: '',
     turmas_ids: [] as number[],
+    responsavel_modo: (props.responsavel_pre_selecionado ? 'existente' : 'novo') as 'existente' | 'novo',
+    responsavel_id: props.responsavel_pre_selecionado?.id ?? null,
     responsavel: {
         nome: '',
         endereco_rua: '',
@@ -46,6 +62,23 @@ const form = useForm({
     },
 });
 
+const buscaResp = ref('');
+const responsaveisFiltrados = computed(() => {
+    const termo = buscaResp.value.trim().toLowerCase();
+    if (!termo) return props.responsaveis;
+    return props.responsaveis.filter(
+        (r) =>
+            r.nome.toLowerCase().includes(termo) ||
+            (r.cpf ?? '').toLowerCase().includes(termo) ||
+            (r.telefone ?? '').includes(termo) ||
+            (r.whatsapp ?? '').includes(termo),
+    );
+});
+
+const responsavelSelecionado = computed(() =>
+    props.responsaveis.find((r) => r.id === form.responsavel_id) ?? props.responsavel_pre_selecionado,
+);
+
 function submit() {
     form.post('/alunos');
 }
@@ -59,6 +92,20 @@ function handleFoto(event: Event) {
 
 const anosEscolares = ['1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano', '6º Ano', '7º Ano', '8º Ano', '9º Ano', '1º EM', '2º EM', '3º EM'];
 const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+
+const anoEscolarOptions = anosEscolares.map(a => ({ value: a, label: a }));
+const estadoOptions = estados.map(uf => ({ value: uf, label: uf }));
+const statusOptions = [
+    { value: 'ativo', label: 'Ativo' },
+    { value: 'inativo', label: 'Inativo' },
+    { value: 'trancado', label: 'Trancado' },
+    { value: 'concluido', label: 'Concluído' },
+];
+const rendaOptions = [
+    { value: 'menos_1_salario', label: 'Menos de 1 salário' },
+    { value: 'ate_2_salarios', label: 'Até 2 salários' },
+    { value: 'acima_3_salarios', label: 'Acima de 3 salários' },
+];
 </script>
 
 <template>
@@ -79,6 +126,172 @@ const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG
             </div>
 
             <form @submit.prevent="submit" class="space-y-6">
+                <!-- Responsável -->
+                <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+                    <h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground"><UserIcon class="size-5" /> Responsável</h2>
+
+                    <div class="mb-4 flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            class="rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
+                            :class="form.responsavel_modo === 'existente' ? 'border-primary bg-primary/10 text-primary' : 'border-input hover:bg-muted'"
+                            @click="form.responsavel_modo = 'existente'"
+                        >
+                            Selecionar responsável existente
+                        </button>
+                        <button
+                            type="button"
+                            class="rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
+                            :class="form.responsavel_modo === 'novo' ? 'border-primary bg-primary/10 text-primary' : 'border-input hover:bg-muted'"
+                            @click="form.responsavel_modo = 'novo'; form.responsavel_id = null"
+                        >
+                            Cadastrar novo responsável
+                        </button>
+                    </div>
+
+                    <p v-if="form.errors.responsavel_modo" class="mb-2 text-xs text-red-500">{{ form.errors.responsavel_modo }}</p>
+
+                    <!-- MODO: EXISTENTE -->
+                    <div v-if="form.responsavel_modo === 'existente'" class="space-y-3">
+                        <div class="relative">
+                            <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <input
+                                v-model="buscaResp"
+                                type="text"
+                                placeholder="Buscar por nome, CPF ou telefone..."
+                                class="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                            />
+                        </div>
+
+                        <div class="max-h-72 overflow-y-auto rounded-lg border border-border">
+                            <p v-if="!responsaveisFiltrados.length" class="p-4 text-center text-sm text-muted-foreground">
+                                Nenhum responsável encontrado.
+                            </p>
+                            <label
+                                v-for="r in responsaveisFiltrados"
+                                :key="r.id"
+                                class="flex cursor-pointer items-center justify-between gap-3 border-b border-border px-3 py-2 text-sm transition-colors last:border-0"
+                                :class="form.responsavel_id === r.id ? 'bg-primary/10' : 'hover:bg-muted'"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <input type="radio" :value="r.id" v-model="form.responsavel_id" class="text-primary focus:ring-primary" />
+                                    <div>
+                                        <p class="font-medium text-foreground">{{ r.nome }}</p>
+                                        <p class="text-xs text-muted-foreground">
+                                            <span v-if="r.cpf">CPF: {{ r.cpf }}</span>
+                                            <span v-if="r.telefone"> · Tel: {{ r.telefone }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <span class="rounded-full bg-muted px-2 py-0.5 text-xs">
+                                    {{ r.alunos_count }} {{ r.alunos_count === 1 ? 'filho' : 'filhos' }}
+                                </span>
+                            </label>
+                        </div>
+
+                        <p v-if="form.errors.responsavel_id" class="text-xs text-red-500">{{ form.errors.responsavel_id }}</p>
+
+                        <div v-if="responsavelSelecionado" class="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+                            <p class="font-medium text-foreground">Responsável selecionado: {{ responsavelSelecionado.nome }}</p>
+                            <p class="text-xs text-muted-foreground">
+                                Já possui {{ responsavelSelecionado.alunos_count }}
+                                {{ responsavelSelecionado.alunos_count === 1 ? 'filho cadastrado' : 'filhos cadastrados' }}.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- MODO: NOVO -->
+                    <div v-else class="grid gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label class="mb-1 block text-sm font-medium text-foreground">Nome Completo *</label>
+                            <input v-model="form.responsavel.nome" type="text" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            <p v-if="form.errors['responsavel.nome']" class="mt-1 text-xs text-red-500">{{ form.errors['responsavel.nome'] }}</p>
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-foreground">CPF</label>
+                            <input v-model="form.responsavel.cpf" type="text" placeholder="000.000.000-00" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            <p v-if="form.errors['responsavel.cpf']" class="mt-1 text-xs text-red-500">{{ form.errors['responsavel.cpf'] }}</p>
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-foreground">Telefone</label>
+                            <input v-model="form.responsavel.telefone" type="tel" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-foreground">WhatsApp</label>
+                            <input v-model="form.responsavel.whatsapp" type="tel" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-foreground">Renda Familiar</label>
+                            <SearchableSelect v-model="form.responsavel.renda_familiar" :options="rendaOptions" placeholder="Selecione" allow-empty empty-label="—" />
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <p class="mb-2 text-sm font-medium text-muted-foreground">Endereço</p>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <input v-model="form.responsavel.endereco_rua" type="text" placeholder="Rua" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                        </div>
+                        <div>
+                            <input v-model="form.responsavel.endereco_numero" type="text" placeholder="Número" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                        </div>
+                        <div>
+                            <input v-model="form.responsavel.endereco_complemento" type="text" placeholder="Complemento" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                        </div>
+                        <div>
+                            <input v-model="form.responsavel.endereco_bairro" type="text" placeholder="Bairro" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                        </div>
+                        <div>
+                            <input v-model="form.responsavel.endereco_cidade" type="text" placeholder="Cidade" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                        </div>
+                        <div>
+                            <SearchableSelect v-model="form.responsavel.endereco_estado" :options="estadoOptions" placeholder="UF" allow-empty empty-label="UF" />
+                        </div>
+                        <div>
+                            <input v-model="form.responsavel.endereco_cep" type="text" placeholder="CEP" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <p class="mb-2 text-sm font-medium text-muted-foreground">Situação Socioeconômica</p>
+                            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.veiculo_proprio ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
+                                    <input type="checkbox" v-model="form.responsavel.veiculo_proprio" class="rounded border-input text-primary focus:ring-primary" />
+                                    Veículo próprio
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.casa_propria ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
+                                    <input type="checkbox" v-model="form.responsavel.casa_propria" class="rounded border-input text-primary focus:ring-primary" />
+                                    Casa própria
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.cadastro_cras ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
+                                    <input type="checkbox" v-model="form.responsavel.cadastro_cras" class="rounded border-input text-primary focus:ring-primary" />
+                                    Cadastro CRAs
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.auxilio_governo ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
+                                    <input type="checkbox" v-model="form.responsavel.auxilio_governo" class="rounded border-input text-primary focus:ring-primary" />
+                                    Auxílio governo
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.desempregado ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
+                                    <input type="checkbox" v-model="form.responsavel.desempregado" class="rounded border-input text-primary focus:ring-primary" />
+                                    Desempregado
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <p class="mb-2 text-sm font-medium text-muted-foreground">Autorizações</p>
+                            <div class="flex gap-4">
+                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.autorizacao_sozinho ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
+                                    <input type="checkbox" v-model="form.responsavel.autorizacao_sozinho" class="rounded border-input text-primary focus:ring-primary" />
+                                    Ir embora sozinho
+                                </label>
+                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.autorizacao_imagem ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
+                                    <input type="checkbox" v-model="form.responsavel.autorizacao_imagem" class="rounded border-input text-primary focus:ring-primary" />
+                                    Uso de imagem
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Dados do Aluno -->
                 <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
                     <h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground"><ClipboardDocumentListIcon class="size-5" /> Dados do Aluno</h2>
@@ -90,15 +303,12 @@ const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium text-foreground">Data de Nascimento *</label>
-                            <input v-model="form.data_nascimento" type="date" required class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            <DatePicker v-model="form.data_nascimento" :error="!!form.errors.data_nascimento" />
                             <p v-if="form.errors.data_nascimento" class="mt-1 text-xs text-red-500">{{ form.errors.data_nascimento }}</p>
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium text-foreground">Ano Escolar</label>
-                            <select v-model="form.ano_escolar" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-                                <option value="">Selecione</option>
-                                <option v-for="a in anosEscolares" :key="a" :value="a">{{ a }}</option>
-                            </select>
+                            <SearchableSelect v-model="form.ano_escolar" :options="anoEscolarOptions" placeholder="Selecione" allow-empty empty-label="—" />
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium text-foreground">Foto</label>
@@ -106,12 +316,7 @@ const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium text-foreground">Status</label>
-                            <select v-model="form.status" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-                                <option value="ativo">Ativo</option>
-                                <option value="inativo">Inativo</option>
-                                <option value="trancado">Trancado</option>
-                                <option value="concluido">Concluído</option>
-                            </select>
+                            <SearchableSelect v-model="form.status" :options="statusOptions" placeholder="Selecione" />
                         </div>
                         <div class="sm:col-span-2">
                             <label class="mb-1 block text-sm font-medium text-foreground">Observações</label>
@@ -145,110 +350,6 @@ const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG
                                 </div>
                             </div>
                         </template>
-                    </div>
-                </div>
-
-                <!-- Dados do Responsável -->
-                <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-                    <h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground"><UserIcon class="size-5" /> Dados do Responsável</h2>
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <div class="sm:col-span-2">
-                            <label class="mb-1 block text-sm font-medium text-foreground">Nome Completo *</label>
-                            <input v-model="form.responsavel.nome" type="text" required class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                            <p v-if="form.errors['responsavel.nome']" class="mt-1 text-xs text-red-500">{{ form.errors['responsavel.nome'] }}</p>
-                        </div>
-                        <div>
-                            <label class="mb-1 block text-sm font-medium text-foreground">CPF</label>
-                            <input v-model="form.responsavel.cpf" type="text" placeholder="000.000.000-00" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                            <label class="mb-1 block text-sm font-medium text-foreground">Telefone</label>
-                            <input v-model="form.responsavel.telefone" type="tel" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                            <label class="mb-1 block text-sm font-medium text-foreground">WhatsApp</label>
-                            <input v-model="form.responsavel.whatsapp" type="tel" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                            <label class="mb-1 block text-sm font-medium text-foreground">Renda Familiar</label>
-                            <select v-model="form.responsavel.renda_familiar" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-                                <option value="">Selecione</option>
-                                <option value="menos_1_salario">Menos de 1 salário</option>
-                                <option value="ate_2_salarios">Até 2 salários</option>
-                                <option value="acima_3_salarios">Acima de 3 salários</option>
-                            </select>
-                        </div>
-
-                        <!-- Endereço -->
-                        <div class="sm:col-span-2">
-                            <p class="mb-2 text-sm font-medium text-muted-foreground">Endereço</p>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <input v-model="form.responsavel.endereco_rua" type="text" placeholder="Rua" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                            <input v-model="form.responsavel.endereco_numero" type="text" placeholder="Número" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                            <input v-model="form.responsavel.endereco_complemento" type="text" placeholder="Complemento" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                            <input v-model="form.responsavel.endereco_bairro" type="text" placeholder="Bairro" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                            <input v-model="form.responsavel.endereco_cidade" type="text" placeholder="Cidade" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-                        <div>
-                            <select v-model="form.responsavel.endereco_estado" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary">
-                                <option value="">UF</option>
-                                <option v-for="uf in estados" :key="uf" :value="uf">{{ uf }}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <input v-model="form.responsavel.endereco_cep" type="text" placeholder="CEP" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                        </div>
-
-                        <!-- Situação Socioeconômica -->
-                        <div class="sm:col-span-2">
-                            <p class="mb-2 text-sm font-medium text-muted-foreground">Situação Socioeconômica</p>
-                            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.veiculo_proprio ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
-                                    <input type="checkbox" v-model="form.responsavel.veiculo_proprio" class="rounded border-input text-primary focus:ring-primary" />
-                                    Veículo próprio
-                                </label>
-                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.casa_propria ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
-                                    <input type="checkbox" v-model="form.responsavel.casa_propria" class="rounded border-input text-primary focus:ring-primary" />
-                                    Casa própria
-                                </label>
-                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.cadastro_cras ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
-                                    <input type="checkbox" v-model="form.responsavel.cadastro_cras" class="rounded border-input text-primary focus:ring-primary" />
-                                    Cadastro CRAs
-                                </label>
-                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.auxilio_governo ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
-                                    <input type="checkbox" v-model="form.responsavel.auxilio_governo" class="rounded border-input text-primary focus:ring-primary" />
-                                    Auxílio governo
-                                </label>
-                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.desempregado ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
-                                    <input type="checkbox" v-model="form.responsavel.desempregado" class="rounded border-input text-primary focus:ring-primary" />
-                                    Desempregado
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Autorizações -->
-                        <div class="sm:col-span-2">
-                            <p class="mb-2 text-sm font-medium text-muted-foreground">Autorizações</p>
-                            <div class="flex gap-4">
-                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.autorizacao_sozinho ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
-                                    <input type="checkbox" v-model="form.responsavel.autorizacao_sozinho" class="rounded border-input text-primary focus:ring-primary" />
-                                    Ir embora sozinho
-                                </label>
-                                <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm transition-colors" :class="form.responsavel.autorizacao_imagem ? 'border-primary bg-primary/10' : 'hover:bg-muted'">
-                                    <input type="checkbox" v-model="form.responsavel.autorizacao_imagem" class="rounded border-input text-primary focus:ring-primary" />
-                                    Uso de imagem
-                                </label>
-                            </div>
-                        </div>
                     </div>
                 </div>
 

@@ -17,6 +17,8 @@ class RolePermissionSeeder extends Seeder
         $permissions = [
             // Alunos
             'alunos.listar', 'alunos.ver', 'alunos.criar', 'alunos.editar', 'alunos.excluir',
+            // Responsáveis
+            'responsaveis.listar', 'responsaveis.ver', 'responsaveis.criar', 'responsaveis.editar', 'responsaveis.excluir',
             // Cursos
             'cursos.listar', 'cursos.criar', 'cursos.editar', 'cursos.excluir',
             // Turmas
@@ -36,6 +38,8 @@ class RolePermissionSeeder extends Seeder
             'dashboard.ver',
             // Unidades
             'unidades.listar', 'unidades.ver', 'unidades.criar', 'unidades.editar', 'unidades.excluir',
+            // Núcleo de Saúde
+            'saude.listar', 'saude.ver', 'saude.criar', 'saude.editar', 'saude.excluir',
         ];
 
         foreach ($permissions as $permission) {
@@ -50,12 +54,14 @@ class RolePermissionSeeder extends Seeder
         $coordenador->givePermissionTo([
             'dashboard.ver',
             'alunos.listar', 'alunos.ver', 'alunos.criar', 'alunos.editar', 'alunos.excluir',
+            'responsaveis.listar', 'responsaveis.ver', 'responsaveis.criar', 'responsaveis.editar', 'responsaveis.excluir',
             'cursos.listar', 'cursos.criar', 'cursos.editar', 'cursos.excluir',
             'turmas.listar', 'turmas.ver', 'turmas.criar', 'turmas.editar', 'turmas.excluir',
             'chamada.registrar',
             'professores.listar', 'professores.ver', 'professores.criar', 'professores.editar',
             'voluntarios.listar', 'voluntarios.ver', 'voluntarios.criar', 'voluntarios.editar',
             'unidades.listar', 'unidades.ver', 'unidades.criar', 'unidades.editar', 'unidades.excluir',
+            'saude.listar', 'saude.ver', 'saude.criar', 'saude.editar', 'saude.excluir',
             'exportar.pdf', 'exportar.excel',
         ]);
 
@@ -63,6 +69,7 @@ class RolePermissionSeeder extends Seeder
         $professor->givePermissionTo([
             'dashboard.ver',
             'alunos.listar', 'alunos.ver',
+            'responsaveis.listar', 'responsaveis.ver',
             'turmas.listar', 'turmas.ver',
             'chamada.registrar',
             'exportar.pdf',

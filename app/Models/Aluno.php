@@ -47,6 +47,11 @@ class Aluno extends Model
         return $this->hasMany(ChamadaAluno::class);
     }
 
+    public function atendimentosSaude(): HasMany
+    {
+        return $this->hasMany(SaudeAtendimento::class);
+    }
+
     public function getIdadeAttribute(): ?int
     {
         if (! $this->data_nascimento) {

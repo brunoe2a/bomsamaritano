@@ -23,6 +23,8 @@ class UpdateAlunoRequest extends FormRequest
             'turmas_ids' => 'nullable|array',
             'turmas_ids.*' => 'exists:turmas,id',
 
+            'responsavel_id' => 'sometimes|nullable|exists:responsaveis,id',
+
             'responsavel.nome' => 'sometimes|required|string|max:255',
             'responsavel.endereco_rua' => 'nullable|string|max:255',
             'responsavel.endereco_numero' => 'nullable|string|max:20',

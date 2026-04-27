@@ -7,6 +7,7 @@ use App\Exports\FinanceiroExport;
 use App\Models\Aluno;
 use App\Models\Chamada;
 use App\Models\FinanceiroLancamento;
+use App\Models\SaudeConvocacao;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -99,5 +100,20 @@ class ExportController extends Controller
         ]);
 
         return $pdf->download("financeiro_{$mes}_{$ano}.pdf");
+    }
+
+    public function saudeConvocacao(SaudeConvocacao $convocacao)
+    {
+        $convocacao->load([
+            'programa',
+            'unidade',
+            'alunos' => fn ($q) => $q->orderBy('nome')->with('responsavel:id,nome,telefone,whatsapp'),
+        ]);
+
+        $pdf = Pdf::loadView('pdf.saude-convocacao', [
+            'convocacao' => $convocacao,
+        ]);
+
+        return $pdf->download("convocacao_saude_{$convocacao->id}.pdf");
     }
 }

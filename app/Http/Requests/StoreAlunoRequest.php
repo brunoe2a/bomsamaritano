@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreAlunoRequest extends FormRequest
 {
@@ -13,6 +14,8 @@ class StoreAlunoRequest extends FormRequest
 
     public function rules(): array
     {
+        $usaExistente = $this->input('responsavel_modo') === 'existente';
+
         return [
             'nome' => 'required|string|max:255',
             'data_nascimento' => 'required|date|before:today',
@@ -23,8 +26,13 @@ class StoreAlunoRequest extends FormRequest
             'turmas_ids' => 'nullable|array',
             'turmas_ids.*' => 'exists:turmas,id',
 
-            // Responsável
-            'responsavel.nome' => 'required|string|max:255',
+            // Modo do responsável: 'existente' (usa responsavel_id) ou 'novo' (usa objeto responsavel)
+            'responsavel_modo' => 'required|in:existente,novo',
+            'responsavel_id' => [Rule::requiredIf($usaExistente), 'nullable', 'exists:responsaveis,id'],
+
+            // Responsável novo (somente quando modo = 'novo')
+            'responsavel' => [Rule::requiredIf(! $usaExistente), 'nullable', 'array'],
+            'responsavel.nome' => [Rule::requiredIf(! $usaExistente), 'nullable', 'string', 'max:255'],
             'responsavel.endereco_rua' => 'nullable|string|max:255',
             'responsavel.endereco_numero' => 'nullable|string|max:20',
             'responsavel.endereco_complemento' => 'nullable|string|max:255',
@@ -52,6 +60,8 @@ class StoreAlunoRequest extends FormRequest
             'nome.required' => 'O nome do aluno é obrigatório.',
             'data_nascimento.required' => 'A data de nascimento é obrigatória.',
             'data_nascimento.before' => 'A data de nascimento deve ser anterior a hoje.',
+            'responsavel_id.required' => 'Selecione um responsável existente.',
+            'responsavel_id.exists' => 'O responsável selecionado não existe.',
             'responsavel.nome.required' => 'O nome do responsável é obrigatório.',
             'responsavel.cpf.unique' => 'Este CPF já está cadastrado.',
         ];
