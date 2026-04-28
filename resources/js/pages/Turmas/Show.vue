@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
-import { ArrowLeft, ClipboardCheck, Pencil, Users, FileText, UserPlus, X, Search } from 'lucide-vue-next';
+import { ArrowLeft, ClipboardCheck, Pencil, Users, FileText, UserPlus, X, Search, Send } from 'lucide-vue-next';
+import SearchableSelect from '@/components/SearchableSelect.vue';
 import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline';
 import AppLayout from '@/layouts/AppLayout.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
@@ -9,6 +10,8 @@ import { useSwal } from '@/composables/useSwal';
 import type { Turma, Chamada, PaginatedData, BreadcrumbItem } from '@/types';
 
 type AlunoDisponivel = { id: number; nome: string; ano_escolar: string };
+type WhatsappInst = { id: number; nome: string };
+type WhatsappTpl = { id: number; nome: string; conteudo: string };
 
 const { confirmDelete: swalDelete, confirmAction } = useSwal();
 
@@ -16,6 +19,8 @@ const props = defineProps<{
     turma: Turma;
     chamadas: PaginatedData<Chamada>;
     alunosDisponiveis: AlunoDisponivel[];
+    whatsappInstancias: WhatsappInst[];
+    whatsappTemplates: WhatsappTpl[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -68,6 +73,42 @@ function desmatricular(matriculaId: number, nomeAluno: string) {
         `A matrícula de "${nomeAluno}" nesta turma será cancelada.`,
         `/turmas/${props.turma.id}/desmatricular/${matriculaId}`,
     );
+}
+
+// --- Notificar Ausentes ---
+const showNotificarAusentes = ref(false);
+
+const notifForm = useForm({
+    whatsapp_instance_id: null as number | null,
+    whatsapp_template_id: null as number | null,
+    destinatarios: [] as { aluno_id: number | null; nome: string; numero: string }[],
+});
+
+const instanciaOptions = computed(() => props.whatsappInstancias.map(i => ({ value: i.id, label: i.nome })));
+const templateOptions = computed(() => props.whatsappTemplates.map(t => ({ value: t.id, label: t.nome })));
+const previewTemplate = computed(() => props.whatsappTemplates.find(t => t.id === notifForm.whatsapp_template_id)?.conteudo || '');
+
+function abrirNotificarAusentes(chamada: Chamada) {
+    const ausentes = (chamada.presencas || []).filter((p: any) => !p.presente);
+    notifForm.reset();
+    notifForm.destinatarios = ausentes.map((p: any) => ({
+        aluno_id: p.aluno?.id ?? null,
+        nome: p.aluno?.nome ?? 'Aluno',
+        numero: p.aluno?.responsavel?.whatsapp || p.aluno?.responsavel?.telefone || '',
+    }));
+    showNotificarAusentes.value = true;
+}
+
+function removerDestinatario(i: number) {
+    notifForm.destinatarios.splice(i, 1);
+}
+
+function enviarNotificacoes() {
+    if (!notifForm.destinatarios.length) return;
+    notifForm.post('/whatsapp/notificacoes/dispatch', {
+        preserveScroll: true,
+        onSuccess: () => { showNotificarAusentes.value = false; },
+    });
 }
 </script>
 
@@ -238,11 +279,71 @@ function desmatricular(matriculaId: number, nomeAluno: string) {
                                         {{ p.aluno?.nome?.split(' ')[0] }}
                                     </span>
                                 </div>
+                                <div v-if="chamada.presencas?.some(p => !p.presente)" class="mt-3 flex justify-end">
+                                    <button
+                                        @click="abrirNotificarAusentes(chamada)"
+                                        class="inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+                                    >
+                                        <Send class="h-3.5 w-3.5" /> Notificar pais dos ausentes
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <p v-else class="text-sm text-muted-foreground">Nenhuma chamada registrada.</p>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Modal: Notificar pais dos ausentes -->
+        <div v-if="showNotificarAusentes" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div class="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl bg-card p-6 shadow-xl">
+                <h2 class="mb-4 flex items-center gap-2 text-lg font-semibold">
+                    <Send class="h-5 w-5" /> Notificar Pais dos Ausentes
+                </h2>
+                <form @submit.prevent="enviarNotificacoes" class="space-y-4">
+                    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <div>
+                            <label class="mb-1 block text-sm font-medium">Instância *</label>
+                            <SearchableSelect v-model="notifForm.whatsapp_instance_id" :options="instanciaOptions" placeholder="Selecione a instância conectada" />
+                            <p v-if="notifForm.errors.whatsapp_instance_id" class="mt-1 text-xs text-red-500">{{ notifForm.errors.whatsapp_instance_id }}</p>
+                            <p v-if="!props.whatsappInstancias.length" class="mt-1 text-xs text-amber-600">
+                                Nenhuma instância conectada. Conecte em
+                                <Link href="/whatsapp/instancias" class="underline">Instâncias WhatsApp</Link>.
+                            </p>
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-medium">Mensagem *</label>
+                            <SearchableSelect v-model="notifForm.whatsapp_template_id" :options="templateOptions" placeholder="Escolha a mensagem" />
+                            <p v-if="notifForm.errors.whatsapp_template_id" class="mt-1 text-xs text-red-500">{{ notifForm.errors.whatsapp_template_id }}</p>
+                        </div>
+                    </div>
+
+                    <div v-if="previewTemplate" class="rounded-lg border border-dashed border-border bg-muted/30 p-3 text-sm whitespace-pre-wrap">{{ previewTemplate }}</div>
+
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium">Destinatários ({{ notifForm.destinatarios.length }})</label>
+                        <div v-if="notifForm.destinatarios.length" class="rounded-lg border border-border">
+                            <div v-for="(d, i) in notifForm.destinatarios" :key="i" class="flex items-center gap-2 border-b border-border p-2 last:border-0">
+                                <span class="flex-1 truncate text-sm">{{ d.nome }}</span>
+                                <input v-model="d.numero" type="text" placeholder="Número WhatsApp" class="h-9 w-48 rounded-lg border border-input bg-background px-2 text-sm outline-none focus:border-primary" />
+                                <button type="button" @click="removerDestinatario(i)" class="rounded-md p-1.5 hover:bg-red-50"><X class="h-4 w-4 text-red-500" /></button>
+                            </div>
+                        </div>
+                        <p v-else class="text-xs text-muted-foreground">Sem ausentes para notificar.</p>
+                    </div>
+
+                    <div class="rounded-lg bg-blue-50 p-3 text-xs text-blue-900 dark:bg-blue-950 dark:text-blue-200">
+                        ℹ️ Os disparos vão para uma fila com delay aleatório de 60 a 180 segundos entre cada mensagem. O número de cada destinatário será validado antes do envio.
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" @click="showNotificarAusentes = false" class="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted">Cancelar</button>
+                        <button type="submit" :disabled="notifForm.processing || !notifForm.destinatarios.length" class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                            {{ notifForm.processing ? 'Enfileirando...' : `Enfileirar ${notifForm.destinatarios.length} envio(s)` }}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </AppLayout>

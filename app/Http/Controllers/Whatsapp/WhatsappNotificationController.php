@@ -10,7 +10,9 @@ use App\Models\WhatsappNotification;
 use App\Models\WhatsappTemplate;
 use App\Services\WhatsappTemplateRenderer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -61,8 +63,6 @@ class WhatsappNotificationController extends Controller
         $criadas = 0;
 
         DB::transaction(function () use ($data, $template, $instanceId, $renderer, &$criadas) {
-            $offsetSegundos = 0;
-
             foreach ($data['destinatarios'] as $dest) {
                 $aluno = ! empty($dest['aluno_id']) ? Aluno::with('responsavel')->find($dest['aluno_id']) : null;
                 $responsavel = $aluno?->responsavel;
@@ -85,8 +85,8 @@ class WhatsappNotificationController extends Controller
                     'status' => 'pendente',
                 ]);
 
-                $offsetSegundos += random_int(60, 180);
-                SendWhatsappMessage::dispatch($notif->id)->delay(now()->addSeconds($offsetSegundos));
+                $sendAt = $this->reservarSlot($instanceId);
+                SendWhatsappMessage::dispatch($notif->id)->delay($sendAt);
 
                 $criadas++;
             }
@@ -98,9 +98,27 @@ class WhatsappNotificationController extends Controller
     public function reenviar(WhatsappNotification $notificacao)
     {
         $notificacao->update(['status' => 'pendente', 'erro' => null]);
-        SendWhatsappMessage::dispatch($notificacao->id)->delay(now()->addSeconds(random_int(60, 180)));
+        $sendAt = $this->reservarSlot($notificacao->whatsapp_instance_id);
+        SendWhatsappMessage::dispatch($notificacao->id)->delay($sendAt);
 
-        return back()->with('success', 'Notificação reenfileirada para reenvio.');
+        return back()->with('success', 'Notificação reenfileirada — sairá às ' . $sendAt->format('H:i:s') . '.');
+    }
+
+    protected function reservarSlot(int $instanceId): Carbon
+    {
+        $key = "whatsapp:instance:{$instanceId}:next_send_at";
+        $now = Carbon::now();
+        $intervalo = random_int(60, 180);
+
+        $proximo = Cache::get($key);
+        $base = ($proximo && Carbon::parse($proximo)->greaterThan($now))
+            ? Carbon::parse($proximo)
+            : $now;
+
+        $sendAt = $base->copy()->addSeconds($intervalo);
+        Cache::put($key, $sendAt->toDateTimeString(), now()->addHours(6));
+
+        return $sendAt;
     }
 
     public function destroy(WhatsappNotification $notificacao)

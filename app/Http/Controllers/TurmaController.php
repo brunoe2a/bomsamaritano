@@ -11,6 +11,8 @@ use App\Models\Voluntario;
 use App\Models\Chamada;
 use App\Models\ChamadaAluno;
 use App\Models\Unidade;
+use App\Models\WhatsappInstance;
+use App\Models\WhatsappTemplate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -101,7 +103,7 @@ class TurmaController extends Controller
         ]);
 
         $chamadas = Chamada::where('turma_id', $turma->id)
-            ->with(['presencas.aluno'])
+            ->with(['presencas.aluno.responsavel:id,nome,whatsapp,telefone'])
             ->latest('data')
             ->paginate(10);
 
@@ -117,6 +119,8 @@ class TurmaController extends Controller
             'turma' => $turma->load('unidade'),
             'chamadas' => $chamadas,
             'alunosDisponiveis' => $alunosDisponiveis,
+            'whatsappInstancias' => WhatsappInstance::where('status', 'connected')->get(['id', 'nome']),
+            'whatsappTemplates' => WhatsappTemplate::ativos()->get(['id', 'nome', 'conteudo']),
         ]);
     }
 

@@ -36,6 +36,24 @@ class SendWhatsappMessage implements ShouldQueue
             return;
         }
 
+        $stateResp = $evolution->instanceStatus($instance->instance_name);
+        $state = data_get($stateResp, 'instance.state') ?? data_get($stateResp, 'state');
+        if ($state !== 'open' && $state !== 'connected') {
+            $instance->update([
+                'status' => $state === 'connecting' ? 'connecting' : 'disconnected',
+                'last_status_at' => Carbon::now(),
+            ]);
+            $notification->update([
+                'status' => 'falhou',
+                'erro' => "Instância \"{$instance->nome}\" não está conectada (state={$state}). Reconecte via QR Code antes de reenviar.",
+            ]);
+            return;
+        }
+
+        if ($instance->status !== 'connected') {
+            $instance->update(['status' => 'connected', 'last_status_at' => Carbon::now()]);
+        }
+
         $notification->update(['status' => 'validando']);
 
         $valido = $evolution->checkNumber($instance->instance_name, $notification->numero);
@@ -60,7 +78,6 @@ class SendWhatsappMessage implements ShouldQueue
             $notification->save();
 
             Log::warning('WhatsApp envio falhou', ['notification_id' => $notification->id, 'response' => $result]);
-            $this->release(60);
             return;
         }
 

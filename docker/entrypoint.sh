@@ -39,6 +39,10 @@ php artisan route:cache
 php artisan view:cache
 php artisan event:cache
 
+# Avisa workers em execução para reiniciar (pegam o código novo após deploy)
+echo "🔄 Restart da fila (queue:restart)..."
+php artisan queue:restart || true
+
 # Create storage symlink
 echo "🔗 Verificando link de storage..."
 if [ ! -L public/storage ]; then

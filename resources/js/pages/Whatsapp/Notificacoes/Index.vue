@@ -124,6 +124,18 @@ function excluir(n: Notificacao) {
     confirmDelete(`A notificação será removida.`, `/whatsapp/notificacoes/${n.id}`);
 }
 
+function formatarData(iso: string | null): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
+}
+
 function statusInfo(s: string) {
     const map: Record<string, { txt: string; cls: string }> = {
         pendente: { txt: 'Pendente', cls: 'bg-slate-100 text-slate-700' },
@@ -162,10 +174,10 @@ function statusInfo(s: string) {
             </div>
 
             <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <StatCard label="Total" :value="props.estatisticas.total" />
-                <StatCard label="Em fila/Enviando" :value="props.estatisticas.pendente" />
-                <StatCard label="Enviadas" :value="props.estatisticas.enviado" />
-                <StatCard label="Falhas" :value="props.estatisticas.falhou" />
+                <StatCard title="Total" :value="props.estatisticas.total" color="primary" />
+                <StatCard title="Em fila / Enviando" :value="props.estatisticas.pendente" color="warning" />
+                <StatCard title="Enviadas" :value="props.estatisticas.enviado" color="success" />
+                <StatCard title="Falhas" :value="props.estatisticas.falhou" color="danger" />
             </div>
 
             <div class="rounded-xl border border-border bg-card p-4 shadow-sm">
@@ -216,7 +228,7 @@ function statusInfo(s: string) {
                                     <span :class="statusInfo(n.status).cls" class="rounded-full px-2 py-0.5 text-xs">{{ statusInfo(n.status).txt }}</span>
                                     <div v-if="n.erro" class="mt-1 text-[11px] text-red-500" :title="n.erro">{{ n.erro.length > 60 ? n.erro.substring(0, 60) + '…' : n.erro }}</div>
                                 </td>
-                                <td class="px-4 py-3 text-xs text-muted-foreground">{{ n.enviado_em || '—' }}</td>
+                                <td class="px-4 py-3 text-xs text-muted-foreground">{{ formatarData(n.enviado_em) }}</td>
                                 <td class="px-4 py-3 text-right">
                                     <div class="inline-flex gap-1">
                                         <button v-if="['falhou', 'numero_invalido'].includes(n.status)" @click="reenviar(n)" title="Reenviar" class="rounded-md p-1.5 hover:bg-muted"><RotateCcw class="h-4 w-4" /></button>
