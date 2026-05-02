@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Head, useForm, Link } from '@inertiajs/vue3';
+import { Head, useForm, Link, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { ArrowLeft, Check, X } from 'lucide-vue-next';
 import { ClipboardDocumentListIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import AppLayout from '@/layouts/AppLayout.vue';
+import DatePicker from '@/components/DatePicker.vue';
 import type { Turma, Aluno, Chamada, BreadcrumbItem } from '@/types';
 
 const props = defineProps<{
@@ -33,6 +34,16 @@ const presencas = ref<Record<number, { presente: boolean; observacao: string }>>
 );
 
 const observacoesGerais = ref(props.chamadaExistente?.observacoes || '');
+const dataSelecionada = ref(props.data);
+
+function onDataChange(novaData: string) {
+    if (!novaData || novaData === props.data) return;
+    router.get(
+        `/turmas/${props.turma.id}/chamada`,
+        { data: novaData },
+        { preserveScroll: true, preserveState: false },
+    );
+}
 
 const totalPresentes = computed(() => Object.values(presencas.value).filter(p => p.presente).length);
 const totalAusentes = computed(() => Object.values(presencas.value).filter(p => !p.presente).length);
@@ -53,7 +64,7 @@ const submitting = ref(false);
 function submit() {
     submitting.value = true;
     form.transform(() => ({
-        data: props.data,
+        data: dataSelecionada.value || props.data,
         observacoes: observacoesGerais.value,
         presencas: props.alunos.map(a => ({
             aluno_id: a.id,
@@ -61,6 +72,7 @@ function submit() {
             observacao: presencas.value[a.id].observacao,
         })),
     })).post(`/turmas/${props.turma.id}/chamada`, {
+        preserveScroll: true,
         onFinish: () => { submitting.value = false; },
     });
 }
@@ -94,7 +106,15 @@ function formatDate(date: string): string {
 
             <!-- Data e Resumo -->
             <div class="mb-6 rounded-xl border border-border bg-card p-4 shadow-sm">
-                <p class="mb-2 text-sm font-medium capitalize text-foreground">{{ formatDate(data) }}</p>
+                <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-muted-foreground">Data da chamada</label>
+                        <div class="w-full sm:w-64">
+                            <DatePicker v-model="dataSelecionada" @update:model-value="onDataChange" />
+                        </div>
+                    </div>
+                    <p class="text-sm font-medium capitalize text-foreground">{{ formatDate(data) }}</p>
+                </div>
                 <div class="flex items-center gap-4 text-sm">
                     <span class="flex items-center gap-1 text-emerald-600">
                         <Check class="h-4 w-4" /> {{ totalPresentes }} presentes

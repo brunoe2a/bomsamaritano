@@ -21,7 +21,7 @@ class Chamada extends Model
     protected function casts(): array
     {
         return [
-            'data' => 'date',
+            'data' => 'date:Y-m-d',
         ];
     }
 

@@ -175,7 +175,7 @@ class TurmaController extends Controller
 
     // =================== CHAMADA ===================
 
-    public function chamada(Turma $turma)
+    public function chamada(Request $request, Turma $turma)
     {
         $turma->load(['curso', 'professores']);
 
@@ -183,9 +183,16 @@ class TurmaController extends Controller
             ->select('alunos.id', 'alunos.nome', 'alunos.foto')
             ->get();
 
-        $hoje = Carbon::today();
+        try {
+            $data = $request->filled('data')
+                ? Carbon::createFromFormat('Y-m-d', $request->string('data'))->startOfDay()
+                : Carbon::today();
+        } catch (\Exception $e) {
+            $data = Carbon::today();
+        }
+
         $chamadaExistente = Chamada::where('turma_id', $turma->id)
-            ->where('data', $hoje)
+            ->where('data', $data)
             ->with('presencas')
             ->first();
 
@@ -193,7 +200,7 @@ class TurmaController extends Controller
             'turma' => $turma,
             'alunos' => $alunos,
             'chamadaExistente' => $chamadaExistente,
-            'data' => $hoje->format('Y-m-d'),
+            'data' => $data->format('Y-m-d'),
         ]);
     }
 
@@ -220,7 +227,6 @@ class TurmaController extends Controller
                 ]
             );
 
-            // Remove presenças anteriores se existirem
             $chamada->presencas()->delete();
 
             foreach ($validated['presencas'] as $presenca) {
@@ -233,7 +239,8 @@ class TurmaController extends Controller
             }
         });
 
-        return redirect()->route('turmas.show', $turma)
+        return redirect()
+            ->route('turmas.chamada', ['turma' => $turma->id, 'data' => $validated['data']])
             ->with('success', 'Chamada registrada com sucesso!');
     }
 

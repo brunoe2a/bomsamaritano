@@ -32,7 +32,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 const periodoLabels: Record<string, string> = { segunda_sexta: 'Segunda a Sexta', sabados: 'Aos Sábados' };
 
 function formatDate(date: string): string {
-    return new Date(date).toLocaleDateString('pt-BR');
+    // Anchor at noon local time to evitar shift de timezone em strings YYYY-MM-DD
+    const ymd = (date || '').slice(0, 10);
+    return new Date(ymd + 'T12:00:00').toLocaleDateString('pt-BR');
 }
 
 // --- Inscrição ---
