@@ -9,6 +9,8 @@ use App\Http\Controllers\SaudeConvocacaoController;
 use App\Http\Controllers\SaudeAtendimentoController;
 use App\Http\Controllers\CursoController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExpedienteController;
+use App\Http\Controllers\ExpedienteRelatorioController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\FinanceiroController;
 use App\Http\Controllers\ProfessorController;
@@ -54,6 +56,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('turmas/{turma}/chamada', [TurmaController::class, 'registrarChamada'])->name('turmas.registrar-chamada')->middleware('permission:chamada.registrar');
         Route::post('turmas/{turma}/matricular', [TurmaController::class, 'matricular'])->name('turmas.matricular');
         Route::delete('turmas/{turma}/desmatricular/{matricula}', [TurmaController::class, 'desmatricular'])->name('turmas.desmatricular');
+        Route::get('turmas/{turma}/ficha-chamada-pdf', [TurmaController::class, 'fichaChamadaPdf'])->name('turmas.ficha-chamada-pdf')->middleware('permission:exportar.pdf');
+    });
+
+    // Expediente (escala de professores e voluntários)
+    Route::middleware('permission:expedientes.listar')->group(function () {
+        Route::get('expedientes', [ExpedienteController::class, 'index'])->name('expedientes.index');
+        Route::get('expedientes/relatorio', [ExpedienteRelatorioController::class, 'index'])->name('expedientes.relatorio');
+        Route::get('expedientes/{expediente}', [ExpedienteController::class, 'show'])->name('expedientes.show');
+        Route::get('expedientes/{expediente}/escala-pdf', [ExpedienteController::class, 'escalaPdf'])->name('expedientes.escala-pdf');
+    });
+
+    Route::middleware('permission:expedientes.criar')->group(function () {
+        Route::get('expedientes-novo', [ExpedienteController::class, 'create'])->name('expedientes.create');
+        Route::post('expedientes', [ExpedienteController::class, 'store'])->name('expedientes.store');
+    });
+
+    Route::middleware('permission:expedientes.editar')->group(function () {
+        Route::put('expedientes/{expediente}', [ExpedienteController::class, 'update'])->name('expedientes.update');
+        Route::patch('expedientes/{expediente}', [ExpedienteController::class, 'update']);
+        Route::delete('expedientes/{expediente}/escalado/{escalado}', [ExpedienteController::class, 'removerEscalado'])->name('expedientes.remover-escalado');
+    });
+
+    Route::middleware('permission:expedientes.excluir')->group(function () {
+        Route::delete('expedientes/{expediente}', [ExpedienteController::class, 'destroy'])->name('expedientes.destroy');
     });
 
     // Professores

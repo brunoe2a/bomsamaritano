@@ -13,6 +13,7 @@ use App\Models\ChamadaAluno;
 use App\Models\Unidade;
 use App\Models\WhatsappInstance;
 use App\Models\WhatsappTemplate;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -242,6 +243,60 @@ class TurmaController extends Controller
         return redirect()
             ->route('turmas.chamada', ['turma' => $turma->id, 'data' => $validated['data']])
             ->with('success', 'Chamada registrada com sucesso!');
+    }
+
+    // =================== FICHA DE CHAMADA PDF ===================
+
+    public function fichaChamadaPdf(Request $request, Turma $turma)
+    {
+        $turma->load(['curso', 'professores', 'voluntarios', 'unidade']);
+
+        try {
+            $ref = $request->filled('mes')
+                ? Carbon::createFromFormat('Y-m', $request->string('mes'))
+                : Carbon::now();
+        } catch (\Exception $e) {
+            $ref = Carbon::now();
+        }
+
+        $inicio = $ref->copy()->startOfMonth();
+        $fim = $ref->copy()->endOfMonth();
+
+        // Mapeia dias_semana da turma (ex: ["segunda","quarta"]) para inteiros do Carbon
+        $mapaDias = [
+            'domingo' => 0, 'segunda' => 1, 'terca' => 2, 'terça' => 2,
+            'quarta' => 3, 'quinta' => 4, 'sexta' => 5, 'sabado' => 6, 'sábado' => 6,
+        ];
+
+        $diasSemanaTurma = collect($turma->dias_semana ?? [])
+            ->map(fn ($d) => $mapaDias[mb_strtolower($d)] ?? null)
+            ->filter(fn ($v) => $v !== null)
+            ->values()
+            ->all();
+
+        $datas = [];
+        $cursor = $inicio->copy();
+        while ($cursor->lte($fim)) {
+            if (empty($diasSemanaTurma) || in_array($cursor->dayOfWeek, $diasSemanaTurma, true)) {
+                $datas[] = $cursor->copy();
+            }
+            $cursor->addDay();
+        }
+
+        $alunos = $turma->alunosAtivos()
+            ->select('alunos.id', 'alunos.nome')
+            ->orderBy('alunos.nome')
+            ->get();
+
+        $pdf = Pdf::loadView('pdf.ficha-chamada', [
+            'turma' => $turma,
+            'alunos' => $alunos,
+            'datas' => $datas,
+            'mes' => $ref->month,
+            'ano' => $ref->year,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream("ficha-chamada-{$turma->id}-{$ref->format('Y-m')}.pdf");
     }
 
     // =================== MATRÍCULA ===================

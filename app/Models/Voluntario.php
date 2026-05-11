@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Storage;
 
 class Voluntario extends Model
@@ -60,6 +61,11 @@ class Voluntario extends Model
     public function habilidades(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Habilidade::class, 'habilidade_voluntario');
+    }
+
+    public function expedienteEscalas(): MorphMany
+    {
+        return $this->morphMany(ExpedienteEscalado::class, 'escalavel');
     }
 
     public function getFotoUrlAttribute(): ?string

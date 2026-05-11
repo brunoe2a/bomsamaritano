@@ -42,6 +42,8 @@ class RolePermissionSeeder extends Seeder
             'saude.listar', 'saude.ver', 'saude.criar', 'saude.editar', 'saude.excluir',
             // WhatsApp
             'whatsapp.listar', 'whatsapp.criar', 'whatsapp.editar', 'whatsapp.excluir', 'whatsapp.enviar',
+            // Expediente
+            'expedientes.listar', 'expedientes.criar', 'expedientes.editar', 'expedientes.excluir',
         ];
 
         foreach ($permissions as $permission) {
@@ -65,6 +67,7 @@ class RolePermissionSeeder extends Seeder
             'unidades.listar', 'unidades.ver', 'unidades.criar', 'unidades.editar', 'unidades.excluir',
             'saude.listar', 'saude.ver', 'saude.criar', 'saude.editar', 'saude.excluir',
             'whatsapp.listar', 'whatsapp.criar', 'whatsapp.editar', 'whatsapp.excluir', 'whatsapp.enviar',
+            'expedientes.listar', 'expedientes.criar', 'expedientes.editar', 'expedientes.excluir',
             'exportar.pdf', 'exportar.excel',
         ]);
 
@@ -75,6 +78,7 @@ class RolePermissionSeeder extends Seeder
             'responsaveis.listar', 'responsaveis.ver',
             'turmas.listar', 'turmas.ver',
             'chamada.registrar',
+            'expedientes.listar',
             'exportar.pdf',
         ]);
 

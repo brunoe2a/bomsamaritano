@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Storage;
 
 class Professor extends Model
@@ -71,6 +72,11 @@ class Professor extends Model
     public function chamadas(): HasMany
     {
         return $this->hasMany(Chamada::class);
+    }
+
+    public function expedienteEscalas(): MorphMany
+    {
+        return $this->morphMany(ExpedienteEscalado::class, 'escalavel');
     }
 
     public function scopeAtivos($query)

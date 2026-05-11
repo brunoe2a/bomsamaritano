@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import {
     BookOpen,
+    CalendarClock,
     DollarSign,
     HandHeart,
     HeartPulse,
@@ -45,6 +46,7 @@ const allNavItems: (NavItem & { permission?: string | 'admin_only' })[] = [
     { title: 'Turmas', href: '/turmas', icon: School, permission: 'turmas.listar' },
     { title: 'Professores', href: '/professores', icon: UserCheck, permission: 'professores.listar' },
     { title: 'Voluntários', href: '/voluntarios', icon: HandHeart, permission: 'voluntarios.listar' },
+    { title: 'Expediente', href: '/expedientes', icon: CalendarClock, permission: 'expedientes.listar' },
     { title: 'Núcleo de Saúde', href: '/saude', icon: HeartPulse, permission: 'saude.listar' },
     { title: 'Financeiro', href: '/financeiro', icon: DollarSign, permission: 'financeiro.listar' },
     { title: 'Unidades', href: '/unidades', icon: Building2, permission: 'unidades.listar' },

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { ArrowLeft, Pencil, Phone, Mail } from 'lucide-vue-next';
-import { DevicePhoneMobileIcon, BookOpenIcon } from '@heroicons/vue/24/outline';
+import { DevicePhoneMobileIcon, BookOpenIcon, ChartBarIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import AppLayout from '@/layouts/AppLayout.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import type { Professor, Turma, BreadcrumbItem } from '@/types';
@@ -9,6 +9,7 @@ import type { Professor, Turma, BreadcrumbItem } from '@/types';
 const props = defineProps<{
     professor: Professor & { turmas?: Turma[] };
     aulasMes: number;
+    frequencia: { total: number; presencas: number; percentual: number };
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -79,6 +80,25 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <p class="text-sm text-muted-foreground">Turmas ativas</p>
                         <p class="text-3xl font-bold text-foreground">{{ professor.turmas?.length || 0 }}</p>
                     </div>
+                </div>
+
+                <!-- Frequência em expedientes -->
+                <div class="rounded-xl border border-border bg-card p-6 shadow-sm md:col-span-2">
+                    <h3 class="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground"><ChartBarIcon class="size-5" /> Frequência em Expedientes</h3>
+                    <div v-if="frequencia.total" class="flex items-center gap-6">
+                        <div class="flex h-24 w-24 items-center justify-center rounded-full border-4" :class="frequencia.percentual >= 75 ? 'border-emerald-500' : 'border-red-500'">
+                            <span class="text-2xl font-bold" :class="frequencia.percentual >= 75 ? 'text-emerald-600' : 'text-red-600'">
+                                {{ frequencia.percentual }}%
+                            </span>
+                        </div>
+                        <div class="space-y-1 text-sm">
+                            <p><span class="font-medium">Total de escalas:</span> {{ frequencia.total }}</p>
+                            <p><span class="font-medium">Presenças:</span> {{ frequencia.presencas }}</p>
+                            <p><span class="font-medium">Faltas:</span> {{ frequencia.total - frequencia.presencas }}</p>
+                            <p v-if="frequencia.percentual < 75" class="flex items-center gap-1 font-medium text-red-600"><ExclamationTriangleIcon class="size-4" /> Frequência abaixo de 75%</p>
+                        </div>
+                    </div>
+                    <p v-else class="text-sm text-muted-foreground">Nenhum expediente registrado ainda.</p>
                 </div>
 
                 <!-- Turmas -->

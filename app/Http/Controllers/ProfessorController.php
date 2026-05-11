@@ -6,6 +6,7 @@ use App\Models\Professor;
 use App\Models\Unidade;
 use App\Models\Especialidade;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -103,9 +104,28 @@ class ProfessorController extends Controller
             ->whereYear('data', now()->year)
             ->count();
 
+        // Frequência em expedientes (escala)
+        $freq = DB::table('expediente_escalados')
+            ->where('escalavel_type', Professor::class)
+            ->where('escalavel_id', $professor->id)
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN presente = 1 THEN 1 ELSE 0 END) as presencas
+            ')
+            ->first();
+
+        $total = (int) ($freq->total ?? 0);
+        $presencas = (int) ($freq->presencas ?? 0);
+        $percentual = $total > 0 ? round(($presencas / $total) * 100, 1) : 0;
+
         return Inertia::render('Professores/Show', [
             'professor' => $professor,
             'aulasMes' => $aulasMes,
+            'frequencia' => [
+                'total' => $total,
+                'presencas' => $presencas,
+                'percentual' => $percentual,
+            ],
         ]);
     }
 

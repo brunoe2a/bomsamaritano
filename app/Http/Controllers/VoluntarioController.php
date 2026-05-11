@@ -6,6 +6,7 @@ use App\Models\Voluntario;
 use App\Models\Unidade;
 use App\Models\Habilidade;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -98,8 +99,26 @@ class VoluntarioController extends Controller
 
     public function show(Voluntario $voluntario)
     {
+        $freq = DB::table('expediente_escalados')
+            ->where('escalavel_type', Voluntario::class)
+            ->where('escalavel_id', $voluntario->id)
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN presente = 1 THEN 1 ELSE 0 END) as presencas
+            ')
+            ->first();
+
+        $total = (int) ($freq->total ?? 0);
+        $presencas = (int) ($freq->presencas ?? 0);
+        $percentual = $total > 0 ? round(($presencas / $total) * 100, 1) : 0;
+
         return Inertia::render('Voluntarios/Show', [
             'voluntario' => $voluntario->load(['unidades', 'habilidades']),
+            'frequencia' => [
+                'total' => $total,
+                'presencas' => $presencas,
+                'percentual' => $percentual,
+            ],
         ]);
     }
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
-import { Plus, Eye, Pencil, Trash2, Search, ClipboardCheck } from 'lucide-vue-next';
+import { Plus, Eye, Pencil, Trash2, Search, ClipboardCheck, Printer } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
 import Pagination from '@/components/Pagination.vue';
@@ -45,6 +45,11 @@ const periodoLabels: Record<string, string> = { segunda_sexta: 'Seg-Sex', sabado
 
 function confirmDelete(turma: Turma) {
     swalDelete(`A turma "${turma.nome}" será removida.`, `/turmas/${turma.id}`);
+}
+
+function imprimirFicha(turma: Turma) {
+    const mes = new Date().toISOString().slice(0, 7);
+    window.open(`/turmas/${turma.id}/ficha-chamada-pdf?mes=${mes}`, '_blank');
 }
 </script>
 
@@ -130,6 +135,9 @@ function confirmDelete(turma: Turma) {
                                         <Link :href="`/turmas/${turma.id}/chamada`" class="rounded-lg p-2 text-emerald-600 transition-colors hover:bg-emerald-50" title="Fazer Chamada">
                                             <ClipboardCheck class="h-4 w-4" />
                                         </Link>
+                                        <button @click="imprimirFicha(turma)" class="rounded-lg p-2 text-amber-600 transition-colors hover:bg-amber-50" title="Imprimir Ficha de Chamada (PDF)">
+                                            <Printer class="h-4 w-4" />
+                                        </button>
                                         <Link :href="`/turmas/${turma.id}`" class="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
                                             <Eye class="h-4 w-4" />
                                         </Link>
