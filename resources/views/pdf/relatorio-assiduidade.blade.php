@@ -83,8 +83,17 @@
                                     @php
                                         $dataBr = \Carbon\Carbon::createFromFormat('Y-m-d', $d['data'])->format('d/m/Y');
                                     @endphp
+                                    @php
+                                        $sufixo = '';
+                                        if (!empty($d['unidade'])) {
+                                            $sufixo .= ' ('.$d['unidade'].')';
+                                        }
+                                        if (empty($d['presente']) && !empty($d['justificativa'])) {
+                                            $sufixo .= ' — '.$d['justificativa'];
+                                        }
+                                    @endphp
                                     <span class="det-item {{ $d['presente'] ? 'det-presente' : 'det-falta' }}">
-                                        {{ $d['presente'] ? '✓' : '✗' }} {{ $dataBr }}@if($d['unidade']) ({{ $d['unidade'] }})@endif@if(!$d['presente'] && $d['justificativa']) — {{ $d['justificativa'] }}@endif
+                                        {{ $d['presente'] ? '✓' : '✗' }} {{ $dataBr }}{{ $sufixo }}
                                     </span>
                                 @endforeach
                             </div>
