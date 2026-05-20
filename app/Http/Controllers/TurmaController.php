@@ -299,6 +299,26 @@ class TurmaController extends Controller
         return $pdf->stream("ficha-chamada-{$turma->id}-{$ref->format('Y-m')}.pdf");
     }
 
+    // =================== LISTA DE ALUNOS PDF ===================
+
+    public function listaAlunosPdf(Turma $turma)
+    {
+        $turma->load(['curso', 'professores', 'voluntarios', 'unidade']);
+
+        $alunos = $turma->alunosAtivos()
+            ->select('alunos.id', 'alunos.nome', 'alunos.ano_escolar', 'alunos.data_nascimento')
+            ->with(['responsavel:id,nome,whatsapp,telefone'])
+            ->orderBy('alunos.nome')
+            ->get();
+
+        $pdf = Pdf::loadView('pdf.turma-lista-alunos', [
+            'turma' => $turma,
+            'alunos' => $alunos,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream("turma-{$turma->id}-lista-alunos.pdf");
+    }
+
     // =================== MATRÍCULA ===================
 
     public function matricular(Request $request, Turma $turma)

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, watch, computed } from 'vue';
-import { ArrowLeft, ChevronDown, ChevronRight, TrendingDown } from 'lucide-vue-next';
+import { ArrowLeft, ChevronDown, ChevronRight, TrendingDown, FileText } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SearchableSelect from '@/components/SearchableSelect.vue';
 import DatePicker from '@/components/DatePicker.vue';
@@ -85,6 +85,17 @@ function isAberto(item: RankingItem): boolean {
     return expandidos.value.has(`${item.tipo_chave}-${item.id}`);
 }
 
+const pdfUrl = computed(() => {
+    const params = new URLSearchParams();
+    if (unidadeId.value) params.append('unidade_id', String(unidadeId.value));
+    if (tipo.value) params.append('tipo', String(tipo.value));
+    if (minEscalas.value) params.append('min_escalas', String(minEscalas.value));
+    if (dataInicio.value) params.append('data_inicio', dataInicio.value);
+    if (dataFim.value) params.append('data_fim', dataFim.value);
+    const qs = params.toString();
+    return `/expedientes/relatorio/pdf${qs ? '?' + qs : ''}`;
+});
+
 function corPercentual(p: number): string {
     if (p >= 80) return 'bg-emerald-100 text-emerald-700';
     if (p >= 50) return 'bg-amber-100 text-amber-700';
@@ -106,10 +117,17 @@ function formatDate(d: string): string {
                 <Link href="/expedientes" class="rounded-lg p-2 hover:bg-muted">
                     <ArrowLeft class="h-5 w-5" />
                 </Link>
-                <div>
+                <div class="flex-1">
                     <h1 class="text-2xl font-bold text-foreground">Relatório de Assiduidade</h1>
                     <p class="text-sm text-muted-foreground">Ranking de presença em expedientes — ordenado do menor para o maior %</p>
                 </div>
+                <a
+                    :href="pdfUrl"
+                    target="_blank"
+                    class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium shadow-sm hover:bg-muted"
+                >
+                    <FileText class="h-4 w-4" /> Gerar PDF
+                </a>
             </div>
 
             <div class="grid grid-cols-1 gap-3 rounded-xl border border-border bg-card p-4 md:grid-cols-5">

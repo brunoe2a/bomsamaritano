@@ -133,6 +133,9 @@ function enviarNotificacoes() {
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                     <StatusBadge :status="turma.status" />
+                    <a :href="`/turmas/${turma.id}/lista-alunos-pdf`" target="_blank" class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted">
+                        <FileText class="h-4 w-4" /> Lista de Alunos PDF
+                    </a>
                     <a :href="`/export/frequencia?turma_id=${turma.id}`" class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted">
                         <FileText class="h-4 w-4" /> Frequência PDF
                     </a>

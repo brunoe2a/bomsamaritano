@@ -57,12 +57,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('turmas/{turma}/matricular', [TurmaController::class, 'matricular'])->name('turmas.matricular');
         Route::delete('turmas/{turma}/desmatricular/{matricula}', [TurmaController::class, 'desmatricular'])->name('turmas.desmatricular');
         Route::get('turmas/{turma}/ficha-chamada-pdf', [TurmaController::class, 'fichaChamadaPdf'])->name('turmas.ficha-chamada-pdf')->middleware('permission:exportar.pdf');
+        Route::get('turmas/{turma}/lista-alunos-pdf', [TurmaController::class, 'listaAlunosPdf'])->name('turmas.lista-alunos-pdf')->middleware('permission:exportar.pdf');
     });
 
     // Expediente (escala de professores e voluntários)
     Route::middleware('permission:expedientes.listar')->group(function () {
         Route::get('expedientes', [ExpedienteController::class, 'index'])->name('expedientes.index');
         Route::get('expedientes/relatorio', [ExpedienteRelatorioController::class, 'index'])->name('expedientes.relatorio');
+        Route::get('expedientes/relatorio/pdf', [ExpedienteRelatorioController::class, 'pdf'])->name('expedientes.relatorio-pdf')->middleware('permission:exportar.pdf');
         Route::get('expedientes/{expediente}', [ExpedienteController::class, 'show'])->name('expedientes.show');
         Route::get('expedientes/{expediente}/escala-pdf', [ExpedienteController::class, 'escalaPdf'])->name('expedientes.escala-pdf');
     });

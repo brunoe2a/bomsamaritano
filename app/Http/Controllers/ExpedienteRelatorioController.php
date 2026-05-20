@@ -6,6 +6,7 @@ use App\Models\ExpedienteEscalado;
 use App\Models\Professor;
 use App\Models\Unidade;
 use App\Models\Voluntario;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,6 +14,37 @@ use Inertia\Inertia;
 class ExpedienteRelatorioController extends Controller
 {
     public function index(Request $request)
+    {
+        [$ranking, $filtros] = $this->gerarRanking($request);
+
+        return Inertia::render('Expedientes/Relatorio', [
+            'ranking' => $ranking,
+            'filtros' => $filtros,
+            'unidades' => Unidade::all(),
+        ]);
+    }
+
+    public function pdf(Request $request)
+    {
+        [$ranking, $filtros] = $this->gerarRanking($request);
+
+        $unidadeNome = null;
+        if (! empty($filtros['unidade_id'])) {
+            $unidadeNome = Unidade::find($filtros['unidade_id'])?->nome;
+        }
+
+        $pdf = Pdf::loadView('pdf.relatorio-assiduidade', [
+            'ranking' => $ranking,
+            'filtros' => $filtros,
+            'unidadeNome' => $unidadeNome,
+        ])->setPaper('a4', 'portrait');
+
+        $nomeArquivo = 'relatorio-assiduidade-'.$filtros['data_inicio'].'-a-'.$filtros['data_fim'].'.pdf';
+
+        return $pdf->stream($nomeArquivo);
+    }
+
+    private function gerarRanking(Request $request): array
     {
         $unidadeId = $request->input('unidade_id');
         $tipo = $request->input('tipo', 'todos'); // todos | professor | voluntario
@@ -73,18 +105,17 @@ class ExpedienteRelatorioController extends Controller
             })
             ->filter(fn ($r) => $r['total_escalas'] >= $minEscalas)
             ->sortBy('percentual')
-            ->values();
+            ->values()
+            ->all();
 
-        return Inertia::render('Expedientes/Relatorio', [
-            'ranking' => $ranking,
-            'filtros' => [
-                'unidade_id' => $unidadeId,
-                'tipo' => $tipo,
-                'min_escalas' => $minEscalas,
-                'data_inicio' => $dataInicio->format('Y-m-d'),
-                'data_fim' => $dataFim->format('Y-m-d'),
-            ],
-            'unidades' => Unidade::all(),
-        ]);
+        $filtros = [
+            'unidade_id' => $unidadeId,
+            'tipo' => $tipo,
+            'min_escalas' => $minEscalas,
+            'data_inicio' => $dataInicio->format('Y-m-d'),
+            'data_fim' => $dataFim->format('Y-m-d'),
+        ];
+
+        return [$ranking, $filtros];
     }
 }
