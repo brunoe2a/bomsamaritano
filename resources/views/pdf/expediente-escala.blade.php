@@ -5,7 +5,7 @@
     <title>Escala do Expediente</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Helvetica', sans-serif; font-size: 11px; color: #333; padding: 18px; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 11px; color: #333; padding: 18px; }
         .header { text-align: center; border-bottom: 3px solid #F5A623; padding-bottom: 10px; margin-bottom: 14px; }
         .header h1 { font-size: 18px; color: #1A1A1A; }
         .header h2 { font-size: 12px; color: #F5A623; margin-top: 2px; }

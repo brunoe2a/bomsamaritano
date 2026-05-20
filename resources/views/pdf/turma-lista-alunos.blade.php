@@ -5,7 +5,7 @@
     <title>Lista de Alunos — {{ $turma->nome }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Helvetica', sans-serif; font-size: 11px; color: #333; padding: 20px; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 11px; color: #333; padding: 20px; }
         .header { text-align: center; border-bottom: 3px solid #F5A623; padding-bottom: 12px; margin-bottom: 16px; }
         .header h1 { font-size: 20px; color: #1A1A1A; }
         .header h2 { font-size: 13px; color: #F5A623; margin-top: 4px; }

@@ -5,7 +5,7 @@
     <title>Ficha de Matrícula — {{ $aluno->nome }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Helvetica', sans-serif; font-size: 12px; color: #333; padding: 20px; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 12px; color: #333; padding: 20px; }
         .header { text-align: center; border-bottom: 3px solid #F5A623; padding-bottom: 15px; margin-bottom: 20px; }
         .header h1 { font-size: 22px; color: #1A1A1A; }
         .header h2 { font-size: 14px; color: #F5A623; margin-top: 4px; }
@@ -37,7 +37,7 @@
 
     <!-- Dados do Aluno -->
     <div class="section">
-        <div class="section-title">📋 Dados do Aluno</div>
+        <div class="section-title">Dados do Aluno</div>
         <table>
             <tr><th>Nome</th><td>{{ $aluno->nome }}</td></tr>
             <tr><th>Data de Nascimento</th><td>{{ $aluno->data_nascimento?->format('d/m/Y') }} ({{ $aluno->idade }} anos)</td></tr>
@@ -87,7 +87,7 @@
     <!-- Matrículas -->
     @if($aluno->matriculas && $aluno->matriculas->count())
     <div class="section">
-        <div class="section-title">📚 Matrículas</div>
+        <div class="section-title">Matrículas</div>
         <table>
             <thead>
                 <tr>
