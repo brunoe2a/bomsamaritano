@@ -55,6 +55,31 @@ function applyFilters() {
 }
 watch([busca, tipo, categoriaId, unidadeId, mes, ano], applyFilters);
 
+// Exportações (Excel/PDF) seguem exatamente os filtros aplicados na listagem,
+// para permitir relatórios separados de entrada e de saída.
+const exportQuery = computed(() => {
+    const params = new URLSearchParams();
+    const filtros: Record<string, string> = {
+        busca: busca.value,
+        tipo: tipo.value,
+        categoria_id: categoriaId.value,
+        unidade_id: unidadeId.value,
+        mes: mes.value,
+        ano: ano.value,
+    };
+    for (const [chave, valor] of Object.entries(filtros)) {
+        if (valor) params.append(chave, valor);
+    }
+    const query = params.toString();
+    return query ? `?${query}` : '';
+});
+
+const pdfLabel = computed(() => {
+    if (tipo.value === 'entrada') return 'PDF Entradas';
+    if (tipo.value === 'saida') return 'PDF Saídas';
+    return 'PDF';
+});
+
 function formatCurrency(v: number) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 }
@@ -148,11 +173,11 @@ const meses = [
                     <p class="text-sm text-muted-foreground">Controle de receitas e despesas</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <a :href="`/export/financeiro/excel?tipo=${tipo}&mes=${mes}&ano=${ano}`" class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium hover:bg-muted">
+                    <a :href="`/export/financeiro/excel${exportQuery}`" class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium hover:bg-muted">
                         <FileSpreadsheet class="h-4 w-4" /> Excel
                     </a>
-                    <a :href="`/export/financeiro/pdf?mes=${mes}&ano=${ano}`" class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium hover:bg-muted">
-                        <FileText class="h-4 w-4" /> PDF
+                    <a :href="`/export/financeiro/pdf${exportQuery}`" class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium hover:bg-muted">
+                        <FileText class="h-4 w-4" /> {{ pdfLabel }}
                     </a>
                     <button @click="openCategoriasModal" class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium hover:bg-muted">
                         <List class="h-4 w-4" /> Categorias

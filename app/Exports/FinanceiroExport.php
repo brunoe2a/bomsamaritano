@@ -4,39 +4,28 @@ namespace App\Exports;
 
 use App\Models\FinanceiroLancamento;
 use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
-class FinanceiroExport implements FromQuery, WithHeadings, WithMapping, WithTitle, ShouldAutoSize
+class FinanceiroExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping, WithTitle
 {
-    protected ?string $tipo;
-    protected ?int $mes;
-    protected ?int $ano;
-
-    public function __construct(?string $tipo = null, ?int $mes = null, ?int $ano = null)
-    {
-        $this->tipo = $tipo;
-        $this->mes = $mes;
-        $this->ano = $ano ?? (int) date('Y');
-    }
+    /**
+     * @param  array{tipo?: ?string, categoria_id?: ?int, unidade_id?: ?int, busca?: ?string, mes?: ?int, ano?: ?int}  $filtros
+     */
+    public function __construct(protected array $filtros = []) {}
 
     public function query()
     {
-        $query = FinanceiroLancamento::with(['categoria', 'doador']);
-
-        if ($this->tipo) {
-            $query->where('tipo', $this->tipo);
-        }
-
-        if ($this->mes) {
-            $query->whereMonth('data', $this->mes);
-        }
-
-        $query->whereYear('data', $this->ano);
-
-        return $query->orderBy('data', 'desc');
+        return FinanceiroLancamento::with(['categoria', 'doador'])
+            ->whereYear('data', $this->filtros['ano'] ?? (int) date('Y'))
+            ->when($this->filtros['mes'] ?? null, fn ($q, $mes) => $q->whereMonth('data', $mes))
+            ->when($this->filtros['tipo'] ?? null, fn ($q, $tipo) => $q->where('tipo', $tipo))
+            ->when($this->filtros['categoria_id'] ?? null, fn ($q, $id) => $q->where('categoria_id', $id))
+            ->when($this->filtros['unidade_id'] ?? null, fn ($q, $id) => $q->where('unidade_id', $id))
+            ->when($this->filtros['busca'] ?? null, fn ($q, $busca) => $q->where('descricao', 'like', "%{$busca}%"))
+            ->orderBy('data', 'desc');
     }
 
     public function headings(): array
@@ -61,6 +50,10 @@ class FinanceiroExport implements FromQuery, WithHeadings, WithMapping, WithTitl
 
     public function title(): string
     {
-        return 'Financeiro';
+        return match ($this->filtros['tipo'] ?? null) {
+            'entrada' => 'Entradas',
+            'saida' => 'Saídas',
+            default => 'Financeiro',
+        };
     }
 }

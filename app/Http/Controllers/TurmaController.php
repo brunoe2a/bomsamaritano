@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Aluno;
-use App\Models\Matricula;
-use App\Models\Turma;
-use App\Models\Curso;
-use App\Models\Professor;
-use App\Models\Voluntario;
 use App\Models\Chamada;
 use App\Models\ChamadaAluno;
+use App\Models\Curso;
+use App\Models\Matricula;
+use App\Models\Professor;
+use App\Models\Turma;
 use App\Models\Unidade;
+use App\Models\Voluntario;
 use App\Models\WhatsappInstance;
 use App\Models\WhatsappTemplate;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -86,7 +86,7 @@ class TurmaController extends Controller
         ]);
 
         $turma = Turma::create($validated);
-        
+
         $turma->professores()->sync($request->professores_ids ?? []);
         $turma->voluntarios()->sync($request->voluntarios_ids ?? []);
 
@@ -158,7 +158,7 @@ class TurmaController extends Controller
         ]);
 
         $turma->update($validated);
-        
+
         $turma->professores()->sync($request->professores_ids ?? []);
         $turma->voluntarios()->sync($request->voluntarios_ids ?? []);
 
@@ -327,37 +327,60 @@ class TurmaController extends Controller
             'aluno_id' => 'required|exists:alunos,id',
         ]);
 
-        // Verificar se já está matriculado
-        $existe = Matricula::where('turma_id', $turma->id)
-            ->where('aluno_id', $validated['aluno_id'])
-            ->where('status', 'ativa')
-            ->exists();
+        $anoLetivo = (int) date('Y');
 
-        if ($existe) {
-            return redirect()->route('turmas.show', $turma)
-                ->with('error', 'Este aluno já está matriculado nesta turma.');
+        // A chave única (aluno_id, turma_id, ano_letivo) impede um segundo registro:
+        // se o aluno já passou pela turma neste ano, a matrícula existente é reativada.
+        $resultado = DB::transaction(function () use ($validated, $turma, $anoLetivo) {
+            $matricula = Matricula::where('turma_id', $turma->id)
+                ->where('aluno_id', $validated['aluno_id'])
+                ->where('ano_letivo', $anoLetivo)
+                ->lockForUpdate()
+                ->first();
+
+            if ($matricula && $matricula->status === 'ativa') {
+                return ['erro' => 'Este aluno já está matriculado nesta turma.'];
+            }
+
+            // Capacidade vale tanto para matrícula nova quanto para reativação
+            $matriculasAtivas = Matricula::where('turma_id', $turma->id)->where('status', 'ativa')->count();
+            if ($matriculasAtivas >= $turma->capacidade_maxima) {
+                return ['erro' => 'A turma está lotada. Capacidade máxima atingida.'];
+            }
+
+            if ($matricula) {
+                $matricula->update([
+                    'tipo' => 'rematricula',
+                    'status' => 'ativa',
+                    'data_matricula' => now(),
+                ]);
+
+                return ['reativada' => true];
+            }
+
+            Matricula::create([
+                'aluno_id' => $validated['aluno_id'],
+                'turma_id' => $turma->id,
+                'tipo' => 'nova',
+                'ano_letivo' => $anoLetivo,
+                'status' => 'ativa',
+                'data_matricula' => now(),
+            ]);
+
+            return ['reativada' => false];
+        });
+
+        if (isset($resultado['erro'])) {
+            return redirect()->route('turmas.show', $turma)->with('error', $resultado['erro']);
         }
-
-        // Verificar capacidade
-        $matriculasAtivas = Matricula::where('turma_id', $turma->id)->where('status', 'ativa')->count();
-        if ($matriculasAtivas >= $turma->capacidade_maxima) {
-            return redirect()->route('turmas.show', $turma)
-                ->with('error', 'A turma está lotada. Capacidade máxima atingida.');
-        }
-
-        Matricula::create([
-            'aluno_id' => $validated['aluno_id'],
-            'turma_id' => $turma->id,
-            'tipo' => 'nova',
-            'ano_letivo' => (int) date('Y'),
-            'status' => 'ativa',
-            'data_matricula' => now(),
-        ]);
 
         $aluno = Aluno::find($validated['aluno_id']);
 
-        return redirect()->route('turmas.show', $turma)
-            ->with('success', "Aluno \"{$aluno->nome}\" matriculado com sucesso!");
+        $mensagem = $resultado['reativada']
+            ? "Matrícula de \"{$aluno->nome}\" reativada com sucesso!"
+            : "Aluno \"{$aluno->nome}\" matriculado com sucesso!";
+
+        return redirect()->route('turmas.show', $turma)->with('success', $mensagem);
     }
 
     public function desmatricular(Turma $turma, Matricula $matricula)
